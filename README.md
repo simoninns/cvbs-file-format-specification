@@ -2,6 +2,8 @@
 
 This repository contains the agreed common file format specification for representing decoded analogue video (CVBS — Colour, Video, Blank, and Sync) as used by [ld-decode](https://github.com/happycube/ld-decode), [vhs-decode](https://github.com/oyvindln/vhs-decode), and related tools in the decode family.
 
+> **PDF version:** A rendered PDF of the specification is available in the [latest GitHub release](../../releases/latest).
+
 ## Purpose
 
 The CVBS file format replaces the previous `.tbc` (Time Base Corrected) format with an industry-standards-compliant specification based on:

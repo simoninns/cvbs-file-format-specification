@@ -152,7 +152,7 @@ Bytes = samples × 2 (each sample is one 16-bit little-endian word).
 
 ### 4.2. Non-Standard Extensions
 
-- **LaserDisc PAL Pilot Bursts:** Allowed to exceed standard blanking levels. **Metadata must flag such exceptions.**
+- **LaserDisc PAL Pilot Bursts:** Allowed to exceed standard blanking levels.
 - **DC Offset:** Not required. The signed 16-bit storage format provides sufficient negative headroom below 0 to accommodate chroma excursions without clipping.
 
 ### 4.3. Field Ordering and Phase Verification
