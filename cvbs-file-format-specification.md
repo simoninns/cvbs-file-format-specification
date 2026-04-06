@@ -99,7 +99,16 @@ Video data is stored field-by-field with no additional framing or headers:
 | NTSC     | 910 (exact) | 768 | 142 |
 | PAL-M    | 909 (exact) | 768 | 141 |
 
-**PAL — non-integer samples per line:** The precise PAL sample rate yields exactly 1135 + 4/625 samples per line on average. The normative consequence is that **exactly 2 lines per field carry 1136 samples** and all remaining lines carry 1135. This is exact, not an approximation. Per frame: 4 lines carry 1136 samples and the remaining 621 carry 1135 (total 709,379 samples per frame). The specific lines that carry 1136 samples are phase-dependent — they fall immediately before the first active picture sample of the field — and shift through the 8-field PAL colour sequence.
+**PAL — non-integer samples per line:** The precise PAL sample rate yields exactly 1135 + 4/625 samples per line on average. The normative consequence is that **exactly 2 lines per field carry 1136 samples** and all remaining lines carry 1135. This is exact, not an approximation. Per frame: 4 lines carry 1136 samples and the remaining 621 carry 1135 (total 709,379 samples per frame).
+
+The positions of the 1136-sample lines are **fixed and identical in every frame**. Because 625 × (4/625) = 4 exactly, the fractional phase resets to zero at the end of every frame with no remainder, so the pattern does not drift and does not vary with the 8-field PAL colour sequence.
+
+This file format defines the fractional sample phase to be **zero at the start of line 1 of the odd field**. The 1136-sample lines are then those where placing one extra sample is required to keep the cumulative sample count an integer, i.e. the condition `⌊4(n+1)/625⌋ > ⌊4n/625⌋` holds, where *n* is the **0-based frame line index** (0 = line 1 of the odd field, 624 = last line of the even field). This yields the following normative line positions:
+
+| Field | Lines carrying 1136 samples (1-indexed within field) |
+|-------|------------------------------------------------------|
+| Odd (313 lines) | **157** and **313** (313 is the last line of the field) |
+| Even (312 lines) | **156** and **312** (312 is the last line of the field) |
 
 > *(Informational — EBU tech3280 §1.2):* For PAL the digital active line consists of samples 0–947; the digital horizontal blanking interval is samples 948–1134 (and sample 1135 on lines that carry 1136 samples). The half-amplitude point of the leading sync edge on line 1, field 1 falls mid-way between samples; on succeeding lines the sampling structure advances by 0.361 ns per line (4 samples per frame).
 
@@ -216,6 +225,11 @@ CREATE TABLE cvbs_file (
     git_commit TEXT,
     number_of_sequential_fields INTEGER NOT NULL,
     burst_locked BOOLEAN NOT NULL,
+    black_level INTEGER
+        CHECK (black_level IS NULL OR black_level BETWEEN 0 AND 1023),
+        -- Override for non-standard black levels (e.g., NTSC-J uses 240 instead of 252).
+        -- NULL means use the standard black level for the declared system.
+        -- Value is a 10-bit sample value (0–1023).
     first_field_sequence_number INTEGER
         CHECK (first_field_sequence_number IS NULL OR
                (system = 'PAL'   AND first_field_sequence_number BETWEEN 1 AND 8) OR
