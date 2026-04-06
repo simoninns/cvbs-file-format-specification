@@ -206,12 +206,14 @@ The metadata file is a **SQLite database** containing the tables defined below.
 ### 5.1. SQLite Metadata Schema
 
 ```sql
-PRAGMA user_version = 1;
+PRAGMA user_version = 2;
 
 CREATE TABLE cvbs_file (
     cvbs_file_id INTEGER PRIMARY KEY,
     system TEXT NOT NULL
         CHECK (system IN ('NTSC', 'PAL', 'PAL_M')),
+    signal_type TEXT NOT NULL
+        CHECK (signal_type IN ('composite', 'yc')),
     decoder TEXT NOT NULL
         CHECK (decoder IN ('ld-decode', 'vhs-decode', 'cvbs-encode', 'cvbs-decode')),
     git_branch TEXT,
@@ -269,6 +271,13 @@ The `cvbs_file` table records file-level metadata. There is one row per CVBS fil
 - **Nullable:** No
 - **Range:** `'NTSC'`, `'PAL'`, `'PAL_M'`
 - **Description:** The analogue video standard used. Determines sample rates, line counts, and signal level definitions. `'PAL_M'` denotes PAL-M, which uses ST.0244 signal levels with PAL colour subcarrier modulation.
+
+#### `signal_type`
+
+- **Type:** TEXT
+- **Nullable:** No
+- **Range:** `'composite'`, `'yc'`
+- **Description:** Declares whether the accompanying CVBS data file is a composite signal (`'composite'`, paired with a `.composite` file) or one file of a dual-file YC pair (`'yc'`, paired with a `.y` or `.c` file). This allows consumers to determine the project type explicitly without relying on file presence detection.
 
 #### `decoder`
 
