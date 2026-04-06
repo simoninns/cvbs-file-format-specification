@@ -180,6 +180,15 @@ Consumers of CVBS files must verify field ordering independently by examining th
 
 A conformant CVBS file may be accompanied by a metadata file (see Section 5) that records the colour field sequence identity of the first stored field, enabling consumers to verify phase continuity from a known starting point rather than having to infer it. Where no metadata file is present, the consumer must obtain this information from user-supplied processing parameters.
 
+> *(Informational — ld-decode/vhs-decode field ordering convention):* The current implementations of the `ld-decode` and `vhs-decode` decoders identify each decoded field with an `isFirstField` boolean that is determined from the VSYNC sync-pulse timing structure. The two systems resolve differently:
+>
+> | System | `isFirstField = true` | EBU/SMPTE field | Spatial position | Line count |
+> |--------|----------------------|-----------------|------------------|------------|
+> | NTSC   | 1H gap before VSYNC  | SMPTE Field I   | Odd / upper      | 263        |
+> | PAL    | 0.5H gap before VSYNC | EBU Field 2    | Even / lower     | 312        |
+>
+> For **NTSC**, `isFirstField = true` corresponds to SMPTE Field I (the odd/upper field, 263 lines). For **PAL**, `isFirstField = true` corresponds to EBU Field 2 (the even/lower field, 312 lines) — because it is EBU Field 2 that leads into its VSYNC interval with a half-line (0.5H) period, not Field 1. This means that in `ld-decode` output, a PAL TBC file conventionally starts with the even analogue field, while an NTSC TBC file starts with the odd analogue field. The C++ metadata library exposes a separate `isFirstFieldFirst` flag that records whether the first sequential field in the file carries `isFirstField = true`; this will normally be `true` for well-formed ld-decode output. Consumers processing ld-decode or vhs-decode CVBS files must account for this asymmetry when reconstructing interlaced frames or verifying the 8-field (PAL) or 4-field (NTSC) colour sequence.
+
 ---
 
 ## 5. Metadata Schema
