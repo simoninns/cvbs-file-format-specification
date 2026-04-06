@@ -79,6 +79,8 @@ Video data is stored field-by-field with no additional framing or headers:
 
 ### 4.1. ST.0244 (NTSC) and EBU 3280 (PAL) Compliance
 
+> **Note — Line Numbering Convention:** This specification uses **0-based field line numbering**: field line 0 is the first line of a field, and the last line of a field is numbered N−1 (where N is the total number of lines in that field). This follows software/coding convention and differs from the 1-based line numbering used in EBU and SMPTE broadcast standards, where lines are numbered starting from 1. Informational blocks that quote line numbers from EBU or SMPTE documents preserve the original 1-indexed numbering from those standards; each such block notes this explicitly. Additionally, EBU and SMPTE number lines sequentially across the entire interlaced frame; where such frame line numbers appear in informational blocks they are labelled as frame line numbers to distinguish them from the field-relative line numbers used throughout the rest of this specification.
+
 #### Sampling Rate
 
 | Standard | Formula | Frequency |
@@ -103,14 +105,14 @@ Video data is stored field-by-field with no additional framing or headers:
 
 The positions of the 1136-sample lines are **fixed and identical in every frame**. Because 625 × (4/625) = 4 exactly, the fractional phase resets to zero at the end of every frame with no remainder, so the pattern does not drift and does not vary with the 8-field PAL colour sequence.
 
-This file format defines the fractional sample phase to be **zero at the start of line 1 of the odd field**. The 1136-sample lines are then those where placing one extra sample is required to keep the cumulative sample count an integer, i.e. the condition `⌊4(n+1)/625⌋ > ⌊4n/625⌋` holds, where *n* is the **0-based frame line index** (0 = line 1 of the odd field, 624 = last line of the even field). This yields the following normative line positions:
+This file format defines the fractional sample phase to be **zero at the start of field line 0 of the odd field** (the first line of the odd field). The 1136-sample lines are then those where placing one extra sample is required to keep the cumulative sample count an integer, i.e. the condition `⌊4(n+1)/625⌋ > ⌊4n/625⌋` holds, where *n* is the **0-based frame line index** (0 = field line 0 of the odd field; 624 = field line 311 of the even field, the last line of the even field). This yields the following normative line positions:
 
-| Field | Lines carrying 1136 samples (1-indexed within field) |
+| Field | Lines carrying 1136 samples (0-indexed within field) |
 |-------|------------------------------------------------------|
-| Odd (313 lines) | **157** and **313** (313 is the last line of the field) |
-| Even (312 lines) | **156** and **312** (312 is the last line of the field) |
+| Odd (313 lines) | **156** and **312** (312 is the last line of the field) |
+| Even (312 lines) | **155** and **311** (311 is the last line of the field) |
 
-> *(Informational — EBU tech3280 §1.2):* For PAL the digital active line consists of samples 0–947; the digital horizontal blanking interval is samples 948–1134 (and sample 1135 on lines that carry 1136 samples). The half-amplitude point of the leading sync edge on line 1, field 1 falls mid-way between samples; on succeeding lines the sampling structure advances by 0.361 ns per line (4 samples per frame).
+> *(Informational — EBU tech3280 §1.2):* For PAL the digital active line consists of samples 0–947; the digital horizontal blanking interval is samples 948–1134 (and sample 1135 on lines that carry 1136 samples). The half-amplitude point of the leading sync edge on line 1, field 1 falls mid-way between samples; on succeeding lines the sampling structure advances by 0.361 ns per line (4 samples per frame). *(Line numbers in this block use EBU tech3280's 1-indexed convention; EBU "line 1, field 1" corresponds to field line 0 of the first field in this specification.)*
 
 > *(Informational — SMPTE ST.0244 §4.1.1):* For NTSC, sampling is orthogonal; all lines carry exactly 910 samples. The half-amplitude point of the leading (falling) horizontal sync edge falls between samples 784 and 785. The digital active line is samples 0–767; the digital horizontal blanking interval is samples 768–909.
 
@@ -122,17 +124,17 @@ This file format defines the fractional sample phase to be **zero at the start o
 | NTSC     | 525         | 2            | 263             | 262              | 4-field               |
 | PAL-M    | 525         | 2            | 263             | 262              | 8-field               |
 
-> *(Informational — EBU tech3280 §1.1.1):* PAL uses 2:1 interlace over 625 lines at 25 frames/s. The PAL subcarrier-to-horizontal (Sc/H) phase relationship cycles over 8 fields before repeating; fields are labelled 1–8. Odd fields (1, 3, 5, 7) contain 313 lines (lines 1–313 within each frame); even fields (2, 4, 6, 8) contain 312 lines (lines 314–625).
+> *(Informational — EBU tech3280 §1.1.1):* PAL uses 2:1 interlace over 625 lines at 25 frames/s. The PAL subcarrier-to-horizontal (Sc/H) phase relationship cycles over 8 fields before repeating; fields are labelled 1–8. Odd fields (1, 3, 5, 7) contain 313 lines (lines 1–313 within each frame); even fields (2, 4, 6, 8) contain 312 lines (lines 314–625). *(Line numbers in this block are EBU 1-indexed frame line numbers, counting sequentially across the full 625-line frame.)*
 
-> *(Informational — SMPTE ST.0244 §4.1, §4.1.2):* NTSC uses 2:1 interlace over 525 lines at 30000/1001 frames/s. The SC/H phase relationship cycles over 4 fields (colour frames A and B, fields I–IV). Fields I and III are odd fields (263 lines each); fields II and IV are even fields (262 lines each). Sample 0 of line 10, field I, colour frame A is an I-axis (+123°) sample.
+> *(Informational — SMPTE ST.0244 §4.1, §4.1.2):* NTSC uses 2:1 interlace over 525 lines at 30000/1001 frames/s. The SC/H phase relationship cycles over 4 fields (colour frames A and B, fields I–IV). Fields I and III are odd fields (263 lines each); fields II and IV are even fields (262 lines each). Sample 0 of line 10, field I, colour frame A is an I-axis (+123°) sample. *(Line numbers in this block use SMPTE ST.0244's 1-indexed frame line convention, counting sequentially across the full 525-line frame; SMPTE "line 10" corresponds to field line 9 of field I in this specification's 0-indexed convention.)*
 
 #### Digital Vertical Blanking Interval
 
-> *(Informational — EBU tech3280 §1.3.2):* For PAL, the digital vertical blanking interval extends:
+> *(Informational — EBU tech3280 §1.3.2):* For PAL, the digital vertical blanking interval extends (line numbers use EBU tech3280's 1-indexed frame line convention, counting sequentially across the full 625-line frame):
 > - Odd fields (1, 3, 5, 7): line 623 sample 382 to line 5 sample 947 (inclusive, wrapping across the frame boundary).
 > - Even fields (2, 4, 6, 8): line 310 sample 948 to line 317 sample 947 (inclusive).
 
-> *(Informational — SMPTE ST.0244 §5.4.1):* For NTSC, the digital vertical blanking interval extends:
+> *(Informational — SMPTE ST.0244 §5.4.1):* For NTSC, the digital vertical blanking interval extends (line numbers use SMPTE ST.0244's 1-indexed frame line convention, counting sequentially across the full 525-line frame):
 > - Fields I and III: line 525 sample 768 to line 9 sample 767 (inclusive, wrapping across the frame boundary).
 > - Fields II and IV: line 263 sample 313 to line 272 sample 767 (inclusive).
 
@@ -172,11 +174,11 @@ Consumers of CVBS files must verify field ordering independently by examining th
 
 **PAL — 8-field sequence (EBU tech3280 §1.1.1):**
 
-> *(Informational — EBU tech3280 §1.1.1 and Fig. 1):* At 0° Sc/H (the normative PAL sampling phase), the +U axis of the subcarrier is at zero phase relative to the horizontal timing reference point (0H) on line 1 of field 1. The colour burst phase rotates through a known pattern over the 8-field cycle. Any break in the expected Sc/H phase progression between consecutive stored fields indicates a discontinuity in the colour field sequence.
+> *(Informational — EBU tech3280 §1.1.1 and Fig. 1):* At 0° Sc/H (the normative PAL sampling phase), the +U axis of the subcarrier is at zero phase relative to the horizontal timing reference point (0H) on line 1 of field 1 (EBU 1-indexed; field line 0 of field 1 in this specification's 0-indexed convention). The colour burst phase rotates through a known pattern over the 8-field cycle. Any break in the expected Sc/H phase progression between consecutive stored fields indicates a discontinuity in the colour field sequence.
 
 **NTSC — 4-field colour frame sequence (SMPTE ST.0244 §4.1.2):**
 
-> *(Informational — SMPTE ST.0244 §3.2, §4.1.2):* At 0° SC/H (the normative NTSC sampling phase), sample 0 of line 10, field I, colour frame A is an I-axis (+123°) sample. Each of the 4 fields in the colour frame cycle has a unique SC/H relationship; comparing the measured burst phase at sample 0 against the expected value identifies the field's position in the 4-field sequence. A phase discontinuity between consecutive fields indicates a colour frame sequence break.
+> *(Informational — SMPTE ST.0244 §3.2, §4.1.2):* At 0° SC/H (the normative NTSC sampling phase), sample 0 of line 10, field I, colour frame A is an I-axis (+123°) sample (SMPTE 1-indexed frame line 10 = field line 9 of field I in this specification's 0-indexed convention). Each of the 4 fields in the colour frame cycle has a unique SC/H relationship; comparing the measured burst phase at sample 0 against the expected value identifies the field's position in the 4-field sequence. A phase discontinuity between consecutive fields indicates a colour frame sequence break.
 
 A conformant CVBS file may be accompanied by a metadata file (see Section 5) that records the colour field sequence identity of the first stored field, enabling consumers to verify phase continuity from a known starting point rather than having to infer it. Where no metadata file is present, the consumer must obtain this information from user-supplied processing parameters.
 
