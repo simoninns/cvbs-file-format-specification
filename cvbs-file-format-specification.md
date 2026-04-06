@@ -8,7 +8,7 @@ The sections below are agreed and considered stable for implementation.
 
 ## 1. Introduction
 
-This document defines the **CVBS File Format** for use with the `cvbs-encode` project. **CVBS** (Colour, Video, Blank, and Sync) describes the full class of analogue video signal — both composite (luma and chroma combined into a single signal) and component YC representations carry the same Colour, Video, Blank, and Sync elements and are therefore both CVBS signals. The format targets **10-bit ST.0244** and **EBU 3280** compliance and accommodates **non-standard cases** (e.g., LaserDisc PAL pilot bursts).
+This document defines the **CVBS File Format** for use with the `ld-decode`, `vhs-decode` and related projects. **CVBS** (Colour, Video, Blank, and Sync) describes the full class of analogue video signal — both composite (luma and chroma combined into a single signal) and component YC representations carry the same Colour, Video, Blank, and Sync elements and are therefore both CVBS signals. The format targets **10-bit ST.0244** and **EBU 3280** compliance and accommodates **non-standard cases** (e.g., LaserDisc PAL pilot bursts).
 
 ---
 
@@ -29,7 +29,7 @@ Each file type uses a distinct extension:
 - **10-bit samples** are stored as **signed 16-bit little-endian integers**. The unsigned 10-bit value (0–1023) maps directly into the signed 16-bit range such that 10-bit value 0 equals signed 16-bit value 0 and 10-bit value 1023 equals signed 16-bit value 1023. This provides:
   - **Negative headroom:** signed 16-bit values below 0 (down to −32768)
   - **Positive headroom:** signed 16-bit values above 1023 (up to 32767)
-- This encoding is known as the **cvbs-decode** encoding. It is the standard, standards-compliant output format for all CVBS files produced by `cvbs-encode`.
+- This encoding is known as the **cvbs-encode** encoding. It is the standard, standards-compliant output format for all CVBS files produced by `ld-decode`, `vhs-decode`, and similar tools.
 - All EBU 3280 and ST.0244 rules governing the position of sync, blanking, and white levels apply as defined — the 10-bit values are simply interpreted within the signed 16-bit space without any offset or scaling.
 - Both representations below are CVBS (Colour, Video, Blank, and Sync) signals; they differ only in how colour information is carried:
   - **Composite CVBS:** Single file containing luma and chroma combined into one signal.
