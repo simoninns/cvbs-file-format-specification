@@ -1,0 +1,50 @@
+name: Build PDF
+
+on:
+  push:
+  pull_request:
+  release:
+    types: [created]
+
+jobs:
+  build-pdf:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # required to upload assets to the release
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pandoc and XeLaTeX
+        run: sudo apt-get install -y pandoc texlive-xetex texlive-fonts-recommended texlive-fonts-extra texlive-latex-extra
+
+      - name: Convert Markdown to PDF
+        run: |
+          pandoc cvbs-file-format-specification.md \
+            --pdf-engine=xelatex \
+            --metadata title="CVBS File Format Specification" \
+            --metadata author="ld-decode, vhs-decode and decode-orc projects" \
+            --metadata date="$(date +'%d %B %Y')" \
+            -V geometry:margin=2.5cm \
+            -V papersize=a4 \
+            -V fontsize=11pt \
+            -V colorlinks=true \
+            -V linkcolor=blue \
+            -V urlcolor=blue \
+            -V toccolor=black \
+            --table-of-contents \
+            --number-sections \
+            -o cvbs-file-format-specification.pdf
+
+      - name: Upload PDF as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cvbs-file-format-specification
+          path: cvbs-file-format-specification.pdf
+
+      - name: Upload PDF to Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: cvbs-file-format-specification.pdf
