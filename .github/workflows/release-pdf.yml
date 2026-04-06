@@ -44,7 +44,7 @@ jobs:
           path: cvbs-file-format-specification.pdf
 
       - name: Upload PDF to Release
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
         uses: softprops/action-gh-release@v2
         with:
           files: cvbs-file-format-specification.pdf
