@@ -178,43 +178,25 @@ Consumers of CVBS files must verify field ordering independently by examining th
 
 > *(Informational — SMPTE ST.0244 §3.2, §4.1.2):* At 0° SC/H (the normative NTSC sampling phase), sample 0 of line 10, field I, colour frame A is an I-axis (+123°) sample. Each of the 4 fields in the colour frame cycle has a unique SC/H relationship; comparing the measured burst phase at sample 0 against the expected value identifies the field's position in the 4-field sequence. A phase discontinuity between consecutive fields indicates a colour frame sequence break.
 
-A conformant CVBS file should be accompanied by metadata (see Section 6) that records the colour field sequence identity of the first stored field, enabling consumers to verify phase continuity from a known starting point rather than having to infer it.
+A conformant CVBS file may be accompanied by a metadata file (see Section 5) that records the colour field sequence identity of the first stored field, enabling consumers to verify phase continuity from a known starting point rather than having to infer it. Where no metadata file is present, the consumer must obtain this information from user-supplied processing parameters.
 
 ---
 
-## Part 2: Under Discussion
+## 5. Metadata Schema
 
-The following sections are proposals only and have not yet been agreed. Content is subject to change based on further discussion.
+The metadata file is **optional**. A CVBS file is self-contained as raw sample data and can be processed without a metadata file provided the consumer obtains the necessary parameters (such as video standard, field count, and colour sequence position) by other means — for example, from user-supplied command-line arguments or application settings.
 
----
-
-## 5. Audio Data (UNDER DISCUSSION)
-
-- **Audio tracks** are stored as separate **48KHz Stereo PCM WAV** files.
-- Up to 16 audio tracks are supported, each as a separate file.
-- **File naming:** `<basename>_audio_<track_number>.wav`
-
-Track number is 00-16 (so, 00, 01, 02, etc.)
-
----
-
-## 6. Metadata Schema (UNDER DISCUSSION)
-
-Metadata is stored in a **separate `.meta` file** to ensure compliance with EBU and ST specifications for transmission.
+When present, metadata is stored in a **separate `.meta` file** alongside the video data files.
 
 - **Metadata:** `<basename>.meta`
 
-### 6.1. SQLite Metadata Schema
+The metadata file is a **SQLite database** containing the tables defined below.
 
-```
-------------------------------------------------------------------
--- Schema Versioning
-------------------------------------------------------------------
+### 5.1. SQLite Metadata Schema
+
+```sql
 PRAGMA user_version = 1;
 
-------------------------------------------------------------------
--- 1. CVBS File Metadata
-------------------------------------------------------------------
 CREATE TABLE cvbs_file (
     cvbs_file_id INTEGER PRIMARY KEY,
     system TEXT NOT NULL
@@ -227,41 +209,31 @@ CREATE TABLE cvbs_file (
     burst_locked BOOLEAN NOT NULL,
     black_level INTEGER
         CHECK (black_level IS NULL OR black_level BETWEEN 0 AND 1023),
-        -- Override for non-standard black levels (e.g., NTSC-J uses 240 instead of 252).
-        -- NULL means use the standard black level for the declared system.
-        -- Value is a 10-bit sample value (0–1023).
     first_field_sequence_number INTEGER
         CHECK (first_field_sequence_number IS NULL OR
                (system = 'PAL'   AND first_field_sequence_number BETWEEN 1 AND 8) OR
                (system = 'NTSC'  AND first_field_sequence_number BETWEEN 1 AND 4) OR
                (system = 'PAL_M' AND first_field_sequence_number BETWEEN 1 AND 8)),
-        -- PAL-M: 1–8 (8-field Sc/H cycle; same colour sequence length as PAL)
     capture_notes TEXT
 );
 
-------------------------------------------------------------------
--- 2. Field Metadata
-------------------------------------------------------------------
 CREATE TABLE field_record (
     cvbs_file_id INTEGER NOT NULL,
-    field_id INTEGER NOT NULL, -- Zero-indexed
-    sync_conf INTEGER NOT NULL, -- 0-100 percent
+    field_id INTEGER NOT NULL,
+    sync_conf INTEGER NOT NULL,
     PRIMARY KEY (cvbs_file_id, field_id),
     FOREIGN KEY (cvbs_file_id)
         REFERENCES cvbs_file(cvbs_file_id)
         ON DELETE CASCADE
 );
 
-------------------------------------------------------------------
--- 3. Sample Flags (e.g., dropouts)
-------------------------------------------------------------------
 CREATE TABLE sample_flags (
     cvbs_file_id INTEGER NOT NULL,
     field_id INTEGER NOT NULL,
-    field_line INTEGER NOT NULL, -- Zero-indexed
+    field_line INTEGER NOT NULL,
     type TEXT NOT NULL
         CHECK (type IN ('dropout')),
-    startx INTEGER NOT NULL, -- 0 = start of CVBS field line
+    startx INTEGER NOT NULL,
     endx INTEGER NOT NULL,
     PRIMARY KEY (cvbs_file_id, field_id, field_line, startx, endx),
     FOREIGN KEY (cvbs_file_id, field_id)
@@ -269,6 +241,159 @@ CREATE TABLE sample_flags (
         ON DELETE CASCADE
 );
 ```
+
+### 5.2. `cvbs_file` Table
+
+The `cvbs_file` table records file-level metadata. There is one row per CVBS file.
+
+#### `cvbs_file_id`
+
+- **Type:** INTEGER, PRIMARY KEY
+- **Nullable:** No
+- **Description:** Unique identifier for the CVBS file record within this metadata database.
+
+#### `system`
+
+- **Type:** TEXT
+- **Nullable:** No
+- **Range:** `'NTSC'`, `'PAL'`, `'PAL_M'`
+- **Description:** The analogue video standard used. Determines sample rates, line counts, and signal level definitions. `'PAL_M'` denotes PAL-M, which uses ST.0244 signal levels with PAL colour subcarrier modulation.
+
+#### `decoder`
+
+- **Type:** TEXT
+- **Nullable:** No
+- **Range:** `'ld-decode'`, `'vhs-decode'`, `'cvbs-encode'`, `'cvbs-decode'`
+- **Description:** The tool that produced the CVBS file. Used to identify the software source and inform interpretation of any tool-specific behaviours.
+
+#### `git_branch`
+
+- **Type:** TEXT
+- **Nullable:** Yes
+- **Description:** The Git branch name of the decoder tool at the time of capture. `NULL` if not recorded.
+
+#### `git_commit`
+
+- **Type:** TEXT
+- **Nullable:** Yes
+- **Description:** The Git commit hash of the decoder tool at the time of capture. `NULL` if not recorded. Enables exact reproduction of the decoding conditions.
+
+#### `number_of_sequential_fields`
+
+- **Type:** INTEGER
+- **Nullable:** No
+- **Range:** ≥ 1
+- **Description:** The total number of fields stored in the accompanying CVBS data file(s), counted sequentially from the first to the last. This count includes all fields regardless of colour sequence position.
+
+#### `burst_locked`
+
+- **Type:** BOOLEAN
+- **Nullable:** No
+- **Description:** `TRUE` if the decoder was phase-locked to the colour burst during capture; `FALSE` otherwise. A burst-locked capture guarantees a stable and known subcarrier phase relationship across fields.
+
+#### `black_level`
+
+- **Type:** INTEGER
+- **Nullable:** Yes
+- **Range:** 0–1023 (10-bit sample value), or `NULL`
+- **Description:** Override for non-standard black levels. `NULL` means use the standard black level for the declared system (PAL: 282; NTSC/PAL-M: 252). A non-`NULL` value specifies the nominal picture black level as a 10-bit sample value. For example, NTSC-J uses a black level of 240 instead of the standard 252.
+
+#### `first_field_sequence_number`
+
+- **Type:** INTEGER
+- **Nullable:** Yes
+- **Range:** 1–8 for `'PAL'` and `'PAL_M'`; 1–4 for `'NTSC'`; or `NULL`
+- **Description:** The position within the colour field cycle of the first field stored in the file. For PAL and PAL-M this is a value in the 8-field sequence (1–8); for NTSC it is a value in the 4-field sequence (1–4). `NULL` if the colour sequence position of the first field is unknown. Consumers should use this value to verify colour burst phase continuity from a known starting point (see Section 4.3).
+
+#### `capture_notes`
+
+- **Type:** TEXT
+- **Nullable:** Yes
+- **Description:** Free-form human-readable notes about the capture. May include source material description, known non-compliance (e.g., LaserDisc PAL pilot bursts), equipment details, or other contextual information. `NULL` if no notes are recorded.
+
+### 5.3. `field_record` Table
+
+The `field_record` table records per-field metadata. There is one row per field stored in the CVBS data file.
+
+#### `cvbs_file_id`
+
+- **Type:** INTEGER, FOREIGN KEY → `cvbs_file.cvbs_file_id`
+- **Nullable:** No
+- **Description:** References the parent `cvbs_file` record.
+
+#### `field_id`
+
+- **Type:** INTEGER
+- **Nullable:** No
+- **Range:** 0 to `number_of_sequential_fields − 1`
+- **Description:** Zero-based sequential index of this field within the CVBS data file. Field 0 is the first stored field.
+
+#### `sync_conf`
+
+- **Type:** INTEGER
+- **Nullable:** No
+- **Range:** 0–100
+- **Description:** Sync confidence for this field, expressed as a percentage (0 = no usable sync detected; 100 = perfect sync). Values below a decoder-defined threshold indicate unreliable sync and should be treated with caution by consumers.
+
+### 5.4. `sample_flags` Table
+
+The `sample_flags` table records sample-level anomaly flags within individual fields. Each row identifies a contiguous horizontal run of flagged samples on a specific line of a specific field.
+
+#### `cvbs_file_id`
+
+- **Type:** INTEGER, FOREIGN KEY → `cvbs_file.cvbs_file_id`
+- **Nullable:** No
+- **Description:** References the parent `cvbs_file` record.
+
+#### `field_id`
+
+- **Type:** INTEGER, FOREIGN KEY → `field_record.field_id`
+- **Nullable:** No
+- **Description:** References the field within which the flagged samples appear.
+
+#### `field_line`
+
+- **Type:** INTEGER
+- **Nullable:** No
+- **Range:** 0 to (lines per field − 1)
+- **Description:** Zero-based line index within the field on which the flagged samples occur.
+
+#### `type`
+
+- **Type:** TEXT
+- **Nullable:** No
+- **Range:** `'dropout'`
+- **Description:** The class of anomaly affecting the flagged samples. Currently only `'dropout'` is defined, indicating a region where the source signal was lost or corrupted (e.g., due to tape damage or disc defect).
+
+#### `startx`
+
+- **Type:** INTEGER
+- **Nullable:** No
+- **Range:** 0 to (samples per line − 1)
+- **Description:** Zero-based sample index of the first flagged sample in the run. Sample 0 is the first sample of the CVBS field line.
+
+#### `endx`
+
+- **Type:** INTEGER
+- **Nullable:** No
+- **Range:** `startx` to (samples per line − 1)
+- **Description:** Zero-based sample index of the last flagged sample in the run (inclusive). The flagged run covers samples `startx` through `endx` inclusive.
+
+---
+
+## Part 2: Under Discussion
+
+The following sections are proposals only and have not yet been agreed. Content is subject to change based on further discussion.
+
+---
+
+## 6. Audio Data (UNDER DISCUSSION)
+
+- **Audio tracks** are stored as separate **48KHz Stereo PCM WAV** files.
+- Up to 16 audio tracks are supported, each as a separate file.
+- **File naming:** `<basename>_audio_<track_number>.wav`
+
+Track number is 00-16 (so, 00, 01, 02, etc.)
 
 ---
 
