@@ -214,6 +214,18 @@ Despite using 525-line/60 Hz timing, PAL-M uses a **8-field** colour sequence (n
 
 ---
 
+## Field Ordering and Phase Verification
+
+Fields are stored sequentially in file order, but their position within a colour field sequence is not encoded in-band. Consumers must determine sequence position by measuring burst phase and checking that adjacent fields follow the expected preset-specific progression.
+
+- **PAL:** verify against the 8-field progression described in the PAL preset section above.
+- **NTSC:** verify against the 4-field progression described in the NTSC preset section above.
+- **PAL_M:** verify against the 8-field progression described in the PAL_M preset section above.
+
+`ld-decode` and `vhs-decode` field-ordering conventions are documented in the informational notes in each preset section.
+
+---
+
 ## Non-Standard Extensions
 
 - **LaserDisc PAL Pilot Bursts:** Allowed to exceed standard blanking levels. When `preset = 'PAL'` and `has_ld_nonstandard_bursts = TRUE` in the metadata, the file contains PAL pilot bursts as defined by IEC 60856-1986; consumers must not treat blanking-region samples outside the standard protected range as errors.
