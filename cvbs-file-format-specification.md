@@ -14,7 +14,7 @@ The format is organised around three independent **preset systems**, each of whi
 
 Every CVBS file is described by one preset from each system. Together they fully specify how to locate field boundaries, interpret sample amplitudes, and determine the reliability of phase and level measurements.
 
-The format accommodates **non-standard cases** (e.g., LaserDisc PAL pilot bursts) through metadata flags rather than structural changes.
+The format accommodates **non-standard cases** (e.g., LaserDisc PAL pilot bursts and variations such as NTSC-J) through metadata flags rather than structural changes.
 
 ---
 
@@ -40,12 +40,12 @@ The physical encoding and amplitude mapping of samples are defined by the **Samp
 
 The standard encoding preset (`CVBS_10BIT`) represents the normative production output of `ld-decode`, `vhs-decode`, and similar tools. The raw capture presets represent unscaled ADC output from hardware capturers such as the DomesdayDuplicator. See [sample-encoding-presets.md](sample-encoding-presets.md) for the full definitions.
 
-Both representations are CVBS (Colour, Video, Blank, and Sync) signals; they differ only in how colour information is carried:
+This specification supports two CVBS (Colour, Video, Blank, and Sync) storage representations, which differ only in how colour information is carried:
 
 - **Composite CVBS:** Single file containing luma and chroma combined into one signal.
 - **Dual-File YC CVBS:** Separate files for luma (Y) and chroma (C), keeping the colour components separated.
 
-The specific sample range — sync tip, blanking, black, white, and peak levels together with any reserved protected values — is defined by the declared Sample Encoding Preset (see Section 6). When the Signal State Preset (see Section 7) has `tbc_applied = TRUE`, the sample data **must comply** with the amplitude mapping defined by the Sample Encoding Preset. **Exceptions** (e.g., LaserDisc PAL pilot bursts, signalled by `has_ld_nonstandard_bursts = TRUE` in the metadata) are allowed but **must be noted in the metadata**. When `tbc_applied = FALSE`, the preset's sample range is informational only; raw or non-TBC'd data is not required to conform to it.
+The specific sample range — sync tip, blanking, black, white, and peak levels together with any reserved protected values — is defined by the declared Sample Encoding Preset (see Section 6).
 
 ### 3.2. File Layout
 
@@ -77,7 +77,7 @@ Certain source materials (e.g., LaserDisc) carry signals in the blanking interva
 
 ### 4.4. Field Ordering and Phase Verification
 
-Fields are stored sequentially in the file with no embedded markers identifying where in the colour field sequence the file begins (see Section 3.2). **No assumption must be made that the first field in a file is field 1 (or field I) of the colour sequence.** Capture sources (e.g., LaserDisc RF captures) may begin recording at any point in the colour field cycle, and the sequence may contain discontinuities caused by disc jumps, skipped fields, or dropouts.
+Fields are stored sequentially in the file with no embedded markers identifying where in the colour field sequence the file begins (see Section 3.2). **No assumption must be made that the first field in a file is field 1 (or field I) of the colour sequence.** Capture sources (e.g., LaserDisc RF captures) may begin recording at any point in the colour field cycle, and the sequence may contain discontinuities caused by source media capture issues such as disc jumps, skipped fields, or dropouts.
 
 Consumers must verify field ordering independently by examining the colour burst phase of each field and checking that consecutive fields exhibit the expected phase progression for the declared preset.
 
@@ -117,18 +117,12 @@ CREATE TABLE cvbs_file (
         )),
     signal_type                 TEXT    NOT NULL
         CHECK (signal_type IN ('composite', 'yc')),
-    sample_rate_numerator       INTEGER
-        CHECK ((sample_rate_numerator IS NULL) = (sample_rate_denominator IS NULL)),
-    sample_rate_denominator     INTEGER,
     decoder                     TEXT    NOT NULL,
-    decoder_name                TEXT,
     git_branch                  TEXT,
     git_commit                  TEXT,
     number_of_sequential_fields INTEGER
         CHECK (number_of_sequential_fields IS NULL OR number_of_sequential_fields >= 1),
-    sc_h_phase_degrees          REAL,
-    black_level                 INTEGER
-        CHECK (black_level IS NULL OR black_level BETWEEN 0 AND 1023),
+    black_level                 INTEGER,
     has_ld_nonstandard_bursts   BOOLEAN,
     capture_notes               TEXT
 );
@@ -198,24 +192,12 @@ The `cvbs_file` table records file-level metadata. There is one row per CVBS fil
 - **Range:** `'composite'`, `'yc'`
 - **Description:** Declares whether the accompanying CVBS data file is a composite signal (`'composite'`, paired with a `.composite` file) or one file of a dual-file YC pair (`'yc'`, paired with a `.y` or `.c` file). This allows consumers to determine the project type explicitly without relying on file presence detection.
 
-#### `sample_rate_numerator` / `sample_rate_denominator`
-
-- **Type:** INTEGER
-- **Nullable:** Yes (both must be non-null together, or both null)
-- **Description:** Exact rational sample rate in Hz, expressed as `sample_rate_numerator / sample_rate_denominator`. `NULL` / `NULL` (the default) indicates the standard 4×fsc rate for the declared `preset` applies; no explicit rate need be stored for standard-compliant files. A non-null pair records the exact rate for oversampled or otherwise non-standard captures — for example, 40,000,000 / 1 for a DomesdayDuplicator capture. When `signal_state_preset` is one of the `NONSTANDARD_*` variants, this field should be populated. A CHECK constraint enforces that the two columns are null together or non-null together.
-
 #### `decoder`
 
 - **Type:** TEXT
 - **Nullable:** No
 - **Range:** `'ld-decode'`, `'vhs-decode'`, `'cvbs-encode'`, `'cvbs-decode'`, `'other'`
-- **Description:** The tool that produced the CVBS file. For tools not in the known list, set `decoder` to `'other'` and record the tool name in `decoder_name`. Used to identify the software source and inform interpretation of any tool-specific behaviours.
-
-#### `decoder_name`
-
-- **Type:** TEXT
-- **Nullable:** Yes
-- **Description:** Human-readable name of the producing tool when `decoder = 'other'` (e.g. `'domesday-duplicator'`, `'cx-decode'`). `NULL` when `decoder` is one of the known standard values.
+- **Description:** The tool that produced the CVBS file. Used to identify the software source and inform interpretation of any tool-specific behaviours.
 
 #### `git_branch`
 
@@ -236,18 +218,12 @@ The `cvbs_file` table records file-level metadata. There is one row per CVBS fil
 - **Range:** ≥ 1, or `NULL`
 - **Description:** The total number of fields stored in the accompanying CVBS data file(s), counted sequentially from the first to the last. This count includes all fields regardless of colour sequence position. `NULL` if the field count is not known at the time of writing — for example, when the file is produced by a raw sampling device that does not segment or count fields during capture. Consumers encountering a `NULL` value must determine the field count by parsing the file directly.
 
-#### `sc_h_phase_degrees`
-
-- **Type:** REAL
-- **Nullable:** Yes
-- **Description:** The subcarrier-to-horizontal (Sc/H) phase at sample 0 of the first stored field, in degrees. `NULL` if the phase is unknown or if the Signal State Preset has `burst_locked = FALSE`. When known, this value allows consumers to phase-align multiple independent captures or to verify that the file begins at the canonical Sc/H reference phase defined by EBU 3280 or SMPTE ST.0244. This value is informational and does not alter the normative field or sample layout.
-
 #### `black_level`
 
 - **Type:** INTEGER
 - **Nullable:** Yes
-- **Range:** 0–1023 (10-bit sample value), or `NULL`
-- **Description:** Override for non-standard black levels within the `CVBS_10BIT` encoding. `NULL` means use the standard black level defined by the declared Video Standard Preset (see [video-standard-presets.md](video-standard-presets.md)). A non-`NULL` value specifies the nominal picture black level as a 10-bit sample value — for example, NTSC-J uses a black level of 240 instead of the standard value. This field is not meaningful for raw capture Sample Encoding Presets, where amplitude calibration must be performed by the consumer.
+- **Range:** `NULL`, or an INTEGER value interpreted according to the declared presets
+- **Description:** Optional override for non-standard black levels. `NULL` means no explicit override is provided and consumers should use the default black level behavior defined by the declared Video Standard Preset and Sample Encoding Preset (see [video-standard-presets.md](video-standard-presets.md) and [sample-encoding-presets.md](sample-encoding-presets.md)). A non-`NULL` value provides an explicit black-level override in the integer domain of the declared Sample Encoding Preset. For Sample Encoding Presets where black-level calibration is not defined or not meaningful (for example raw capture presets), this field should be `NULL`.
 
 #### `has_ld_nonstandard_bursts`
 
