@@ -21,7 +21,11 @@ jobs:
 
       - name: Convert Markdown to PDF
         run: |
-          pandoc cvbs-file-format-specification.md \
+          pandoc \
+            cvbs-file-format-specification.md \
+            video-standard-presets.md \
+            sample-encoding-presets.md \
+            signal-state-presets.md \
             --pdf-engine=xelatex \
             --metadata title="CVBS File Format Specification" \
             --metadata author="ld-decode, vhs-decode and decode-orc projects" \
@@ -34,7 +38,6 @@ jobs:
             -V urlcolor=blue \
             -V toccolor=black \
             --table-of-contents \
-            --number-sections \
             -o cvbs-file-format-specification.pdf
 
       - name: Upload PDF as workflow artifact
