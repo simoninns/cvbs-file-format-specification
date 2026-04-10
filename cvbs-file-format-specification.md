@@ -8,9 +8,9 @@ This document defines the **CVBS File Format** for use with the `ld-decode`, `vh
 
 The format is organised around three independent **preset systems**, each of which captures a distinct dimension of the signal:
 
-- **Video Standard Presets** (Section 4): define the timing and structural parameters of the video signal — line counts, field rates, horizontal sample structure, colour field sequence, and the normative sample level tables for standards-compliant signals. Current presets: `PAL`, `NTSC`, `PAL_M`.
-- **Sample Encoding Presets** (Section 6): define the bit depth, word format, and amplitude mapping used when the sample data was recorded. Current presets: `CVBS_10BIT` (the standard encoding derived from EBU 3280 / SMPTE ST.0244), `RAW_S16_28MSPS`, `RAW_S16_40MSPS`.
-- **Signal State Presets** (Section 7): define the processing state of the signal at the time of storage — whether a standard 4×fsc sample rate was used, whether time-base correction (TBC) was applied, and whether the decoder was phase-locked to the colour burst. Current presets: `STANDARD_TBC_LOCKED`, `STANDARD_TBC_UNLOCKED`, `STANDARD_RAW`, `NONSTANDARD_TBC_LOCKED`, `NONSTANDARD_TBC_UNLOCKED`, `NONSTANDARD_RAW`.
+- **Video Standard Presets** (Section 4): define the timing and structural parameters of the video signal — line counts, field rates, horizontal sample structure, colour field sequence, and the normative sample level tables for standards-compliant signals.
+- **Sample Encoding Presets** (Section 6): define the bit depth, word format, and amplitude mapping used when the sample data was recorded.
+- **Signal State Presets** (Section 7): define the processing state of the signal at the time of storage — whether a standard 4×fsc sample rate was used, whether time-base correction (TBC) was applied, and whether the decoder was phase-locked to the colour burst.
 
 Every CVBS file is described by one preset from each system. Together they fully specify how to locate field boundaries, interpret sample amplitudes, and determine the reliability of phase and level measurements.
 
@@ -38,7 +38,7 @@ The physical encoding and amplitude mapping of samples are defined by the **Samp
 - **Amplitude mapping:** the relationship between the stored integer value and the analogue signal amplitude — specifically, where sync tip, blanking, black, white, and peak levels fall within the integer range.
 - **Headroom:** whether negative or positive values beyond the nominal 0–1023 range are meaningful.
 
-The two standard encoding presets (`CVBS_10BIT` for both EBU 3280 and SMPTE ST.0244 sources, defined in Section 6.1) represent the normative production output of `ld-decode`, `vhs-decode`, and similar tools. The raw capture presets (`RAW_S16_28MSPS`, `RAW_S16_40MSPS`, defined in Sections 6.2 and 6.3) represent unscaled ADC output from hardware capturers such as the DomesdayDuplicator.
+The standard encoding preset (`CVBS_10BIT`) represents the normative production output of `ld-decode`, `vhs-decode`, and similar tools. The raw capture presets represent unscaled ADC output from hardware capturers such as the DomesdayDuplicator. See [sample-encoding-presets.md](sample-encoding-presets.md) for the full definitions.
 
 Both representations are CVBS (Colour, Video, Blank, and Sync) signals; they differ only in how colour information is carried:
 
@@ -63,64 +63,25 @@ Video data is stored field-by-field with no additional framing or headers:
 
 ### 4.1. Preset System
 
-A **Video Standard Preset** is a named configuration that fully defines all timing and structural parameters for a video standard. Video Standard Presets encapsulate everything that is intrinsic to a given standard: sampling rate, line counts, field structure, sample level tables, colour field sequence length, and references to the external standards on which the preset is based. These presets do **not** define the physical sample word format or the processing state of the signal — those are covered by the Sample Encoding Preset (Section 6) and Signal State Preset (Section 7) respectively.
+A **Video Standard Preset** is a named configuration that fully defines all timing and structural parameters for a video standard: sampling rate, line counts, field structure, sample level tables, colour field sequence length, and references to the external standards on which the preset is based. These presets do **not** define the physical sample word format or the processing state of the signal — those are covered by the Sample Encoding Preset (Section 6) and Signal State Preset (Section 7) respectively.
 
-**Naming convention:** Preset names follow the pattern `PRIMARY` or `PRIMARY_SUBSET`, where `PRIMARY` identifies the base standard and `SUBSET` (when present) identifies a regional or technical variant. The underscore `_` separates the primary designator from the subset. Preset names use only uppercase ASCII letters, digits, and underscores; each name defined in this specification is unique.
-
-Examples:
-- `PAL` — the primary PAL standard
-- `NTSC` — the primary NTSC standard
-- `PAL_M` — a PAL-family variant using NTSC 525-line/60 Hz timing with PAL colour subcarrier modulation
-
-The `preset` field in the `cvbs_file` metadata table (see Section 5.2) identifies which Video Standard Preset applies to a given CVBS file. Consumers must implement a preset in full to correctly process files that use it; an unrecognised preset name must not be silently interpreted — the consumer must refuse to process the file or report an error.
-
-Video Standard Presets defined in this specification: `PAL`, `NTSC`, `PAL_M`. Additional presets may be defined in future revisions or companion documents; the naming convention ensures that each new preset has a unique, unambiguous identifier.
+The `preset` field in the `cvbs_file` metadata table (see Section 5.2) identifies which Video Standard Preset applies to a given CVBS file. Consumers must implement a preset in full; an unrecognised preset name must not be silently interpreted — the consumer must refuse to process the file or report an error.
 
 ### 4.2. Preset Definitions
 
-Full preset definitions are maintained in a separate document: [video-standard-presets.md](video-standard-presets.md).
-
-#### 4.2.1. Preset: `PAL` — [see video-standard-presets.md](video-standard-presets.md#preset-pal)
-
-*(See [video-standard-presets.md](video-standard-presets.md#preset-pal) for the full PAL definition.)*
-
-#### 4.2.2. Preset: `NTSC` — [see video-standard-presets.md](video-standard-presets.md#preset-ntsc)
-
-*(See [video-standard-presets.md](video-standard-presets.md#preset-ntsc) for the full NTSC definition.)*
-
-#### 4.2.3. Preset: `PAL_M` — [see video-standard-presets.md](video-standard-presets.md#preset-pal_m)
-
-*(See [video-standard-presets.md](video-standard-presets.md#preset-pal_m) for the full PAL-M definition.)*
+Full definitions — including naming convention, sampling rates, sample level tables, horizontal and vertical structure, and normative field sizes — are in [video-standard-presets.md](video-standard-presets.md).
 
 ### 4.3. Non-Standard Extensions
 
-- **LaserDisc PAL Pilot Bursts:** Allowed to exceed standard blanking levels.
-- **DC Offset:** Not required. The signed 16-bit storage format provides sufficient negative headroom below 0 to accommodate chroma excursions without clipping.
+Certain source materials (e.g., LaserDisc) carry signals in the blanking interval that fall outside the standard protected sample range. See [video-standard-presets.md](video-standard-presets.md#non-standard-extensions) for details.
 
 ### 4.4. Field Ordering and Phase Verification
 
 Fields are stored sequentially in the file with no embedded markers identifying where in the colour field sequence the file begins (see Section 3.2). **No assumption must be made that the first field in a file is field 1 (or field I) of the colour sequence.** Capture sources (e.g., LaserDisc RF captures) may begin recording at any point in the colour field cycle, and the sequence may contain discontinuities caused by disc jumps, skipped fields, or dropouts.
 
-Consumers of CVBS files must verify field ordering independently by examining the colour burst phase of each field and checking that consecutive fields exhibit the expected phase progression for the declared preset.
+Consumers must verify field ordering independently by examining the colour burst phase of each field and checking that consecutive fields exhibit the expected phase progression for the declared preset.
 
-**PAL — 8-field sequence (EBU tech3280 §1.1.1):**
-
-> *(Informational — EBU tech3280 §1.1.1 and Fig. 1):* At 0° Sc/H (the normative PAL sampling phase), the +U axis of the subcarrier is at zero phase relative to the horizontal timing reference point (0H) on line 1 of field 1 (EBU 1-indexed; field line 0 of field 1 in this specification's 0-indexed convention). The colour burst phase rotates through a known pattern over the 8-field cycle. Any break in the expected Sc/H phase progression between consecutive stored fields indicates a discontinuity in the colour field sequence.
-
-**NTSC — 4-field colour frame sequence (SMPTE ST.0244 §4.1.2):**
-
-> *(Informational — SMPTE ST.0244 §3.2, §4.1.2):* At 0° SC/H (the normative NTSC sampling phase), sample 0 of line 10, field I, colour frame A is an I-axis (+123°) sample (SMPTE 1-indexed frame line 10 = field line 9 of field I in this specification's 0-indexed convention). Each of the 4 fields in the colour frame cycle has a unique SC/H relationship; comparing the measured burst phase at sample 0 against the expected value identifies the field's position in the 4-field sequence. A phase discontinuity between consecutive fields indicates a colour frame sequence break.
-
-A conformant CVBS file may be accompanied by a metadata file (see Section 5) that records the colour field sequence identity of the first stored field, enabling consumers to verify phase continuity from a known starting point rather than having to infer it. Where no metadata file is present, the consumer must obtain this information from user-supplied processing parameters.
-
-> *(Informational — ld-decode/vhs-decode field ordering convention):* The current implementations of the `ld-decode` and `vhs-decode` decoders identify each decoded field with an `isFirstField` boolean that is determined from the VSYNC sync-pulse timing structure. The two systems resolve differently:
->
-> | System | `isFirstField = true` | EBU/SMPTE field | Spatial position | Line count |
-> |--------|----------------------|-----------------|------------------|------------|
-> | NTSC   | 1H gap before VSYNC  | SMPTE Field I   | Odd / upper      | 263        |
-> | PAL    | 0.5H gap before VSYNC | EBU Field 2    | Even / lower     | 312        |
->
-> For **NTSC**, `isFirstField = true` corresponds to SMPTE Field I (the odd/upper field, 263 lines). For **PAL**, `isFirstField = true` corresponds to EBU Field 2 (the even/lower field, 312 lines) — because it is EBU Field 2 that leads into its VSYNC interval with a half-line (0.5H) period, not Field 1. This means that in `ld-decode` output, a PAL TBC file conventionally starts with the even analogue field, while an NTSC TBC file starts with the odd analogue field. The C++ metadata library exposes a separate `isFirstFieldFirst` flag that records whether the first sequential field in the file carries `isFirstField = true`; this will normally be `true` for well-formed ld-decode output. Consumers processing ld-decode or vhs-decode CVBS files must account for this asymmetry when reconstructing interlaced frames or verifying the 8-field (PAL) or 4-field (NTSC) colour sequence.
+Preset-specific phase progression rules and the `ld-decode`/`vhs-decode` field ordering convention are in [video-standard-presets.md](video-standard-presets.md#field-ordering-and-phase-verification).
 
 ---
 
@@ -163,15 +124,11 @@ CREATE TABLE cvbs_file (
     decoder_name                TEXT,
     git_branch                  TEXT,
     git_commit                  TEXT,
-    number_of_sequential_fields INTEGER NOT NULL,
+    number_of_sequential_fields INTEGER
+        CHECK (number_of_sequential_fields IS NULL OR number_of_sequential_fields >= 1),
     sc_h_phase_degrees          REAL,
     black_level                 INTEGER
         CHECK (black_level IS NULL OR black_level BETWEEN 0 AND 1023),
-    first_field_sequence_number INTEGER
-        CHECK (first_field_sequence_number IS NULL OR
-               (preset = 'PAL'   AND first_field_sequence_number BETWEEN 1 AND 8) OR
-               (preset = 'NTSC'  AND first_field_sequence_number BETWEEN 1 AND 4) OR
-               (preset = 'PAL_M' AND first_field_sequence_number BETWEEN 1 AND 8)),
     has_ld_nonstandard_bursts   BOOLEAN,
     capture_notes               TEXT
 );
@@ -217,22 +174,22 @@ The `cvbs_file` table records file-level metadata. There is one row per CVBS fil
 
 - **Type:** TEXT
 - **Nullable:** No
-- **Range:** Any Video Standard Preset name defined in Section 4.2; currently `'PAL'`, `'NTSC'`, `'PAL_M'`
-- **Description:** Identifies the Video Standard Preset that applies to this CVBS file. The preset name uniquely determines all timing and structural parameters — sampling rate, line counts, field structure, sample level tables, and colour field sequence length — as specified in Section 4.2. Consumers must implement the named preset in full; an unrecognised preset name must not be silently interpreted.
+- **Range:** Any Video Standard Preset name defined in [video-standard-presets.md](video-standard-presets.md)
+- **Description:** Identifies the Video Standard Preset that applies to this CVBS file. The preset name uniquely determines all timing and structural parameters — sampling rate, line counts, field structure, sample level tables, and colour field sequence length. Consumers must implement the named preset in full; an unrecognised preset name must not be silently interpreted.
 
 #### `sample_encoding_preset`
 
 - **Type:** TEXT
 - **Nullable:** No
-- **Range:** Any Sample Encoding Preset name defined in Section 6; currently `'CVBS_10BIT'`, `'RAW_S16_28MSPS'`, `'RAW_S16_40MSPS'`
-- **Description:** Identifies the Sample Encoding Preset that defines the physical word format and amplitude mapping of the sample data. See Section 6 for full definitions.
+- **Range:** Any Sample Encoding Preset name defined in [sample-encoding-presets.md](sample-encoding-presets.md)
+- **Description:** Identifies the Sample Encoding Preset that defines the physical word format and amplitude mapping of the sample data.
 
 #### `signal_state_preset`
 
 - **Type:** TEXT
 - **Nullable:** No
-- **Range:** Any Signal State Preset name defined in Section 7; currently `'STANDARD_TBC_LOCKED'`, `'STANDARD_TBC_UNLOCKED'`, `'STANDARD_RAW'`, `'NONSTANDARD_TBC_LOCKED'`, `'NONSTANDARD_TBC_UNLOCKED'`, `'NONSTANDARD_RAW'`
-- **Description:** Identifies the Signal State Preset that describes the processing state of the signal at the time of storage. The Signal State Preset encodes whether the sample rate is the standard 4×fsc for the declared Video Standard Preset, whether TBC was applied, and whether burst locking was applied. See Section 7 for full definitions.
+- **Range:** Any Signal State Preset name defined in [signal-state-presets.md](signal-state-presets.md)
+- **Description:** Identifies the Signal State Preset that describes the processing state of the signal at the time of storage — whether the sample rate is standard 4×fsc, whether TBC was applied, and whether burst locking was applied.
 
 #### `signal_type`
 
@@ -275,9 +232,9 @@ The `cvbs_file` table records file-level metadata. There is one row per CVBS fil
 #### `number_of_sequential_fields`
 
 - **Type:** INTEGER
-- **Nullable:** No
-- **Range:** ≥ 1
-- **Description:** The total number of fields stored in the accompanying CVBS data file(s), counted sequentially from the first to the last. This count includes all fields regardless of colour sequence position.
+- **Nullable:** Yes
+- **Range:** ≥ 1, or `NULL`
+- **Description:** The total number of fields stored in the accompanying CVBS data file(s), counted sequentially from the first to the last. This count includes all fields regardless of colour sequence position. `NULL` if the field count is not known at the time of writing — for example, when the file is produced by a raw sampling device that does not segment or count fields during capture. Consumers encountering a `NULL` value must determine the field count by parsing the file directly.
 
 #### `sc_h_phase_degrees`
 
@@ -290,20 +247,13 @@ The `cvbs_file` table records file-level metadata. There is one row per CVBS fil
 - **Type:** INTEGER
 - **Nullable:** Yes
 - **Range:** 0–1023 (10-bit sample value), or `NULL`
-- **Description:** Override for non-standard black levels within the `CVBS_10BIT` encoding. `NULL` means use the standard black level defined by the declared Video Standard Preset (PAL: 282; NTSC/PAL-M: 252). A non-`NULL` value specifies the nominal picture black level as a 10-bit sample value. For example, NTSC-J uses a black level of 240 instead of the standard 252. This field is not meaningful for raw capture Sample Encoding Presets (`RAW_S16_28MSPS`, `RAW_S16_40MSPS`), where amplitude calibration must be performed by the consumer.
-
-#### `first_field_sequence_number`
-
-- **Type:** INTEGER
-- **Nullable:** Yes
-- **Range:** 1–8 for `'PAL'` and `'PAL_M'`; 1–4 for `'NTSC'`; or `NULL`
-- **Description:** The position within the colour field cycle of the first field stored in the file. The valid range is determined by the colour field sequence length of the declared Video Standard Preset (see Section 4.2): 1–8 for `'PAL'` and `'PAL_M'`; 1–4 for `'NTSC'`. `NULL` if the colour sequence position of the first field is unknown. Consumers should use this value to verify colour burst phase continuity from a known starting point (see Section 4.4).
+- **Description:** Override for non-standard black levels within the `CVBS_10BIT` encoding. `NULL` means use the standard black level defined by the declared Video Standard Preset (see [video-standard-presets.md](video-standard-presets.md)). A non-`NULL` value specifies the nominal picture black level as a 10-bit sample value — for example, NTSC-J uses a black level of 240 instead of the standard value. This field is not meaningful for raw capture Sample Encoding Presets, where amplitude calibration must be performed by the consumer.
 
 #### `has_ld_nonstandard_bursts`
 
 - **Type:** BOOLEAN
 - **Nullable:** Yes
-- **Description:** Indicates the presence of LaserDisc-specific non-standard burst signals in the blanking interval. The meaning is determined by the declared `preset`: when `preset = 'PAL'` and `has_ld_nonstandard_bursts = TRUE`, the file contains PAL pilot bursts as defined by IEC 60856-1986; when `preset = 'NTSC'` and `has_ld_nonstandard_bursts = TRUE`, the file contains additional colour bursts as defined by IEC 60857-1986. When `TRUE`, consumers must not treat blanking-region samples that fall outside the standard protected range as errors. `NULL` means not applicable or not known.
+- **Description:** Indicates the presence of LaserDisc-specific non-standard burst signals in the blanking interval. The meaning is preset-specific; see [video-standard-presets.md](video-standard-presets.md#non-standard-extensions) for details. `NULL` means not applicable or not known.
 
 #### `capture_notes`
 
@@ -397,40 +347,17 @@ The `sample_flags` table records sample-level anomaly flags within individual fi
 
 ## 6. Sample Encoding Presets
 
-A **Sample Encoding Preset** defines the physical word format and amplitude mapping applied to every sample in the file. It specifies the integer width, signedness, byte order, and the relationship between stored values and analogue signal levels (sync tip, blanking, black, white, peak). The preset name is stored in the `sample_encoding_preset` field of the `cvbs_file` metadata table (see Section 5.2).
+A **Sample Encoding Preset** defines the physical word format and amplitude mapping applied to every sample in the file: the integer width, signedness, byte order, and the relationship between stored values and analogue signal levels (sync tip, blanking, black, white, peak). The preset name is stored in the `sample_encoding_preset` field of the `cvbs_file` metadata table (see Section 5.2).
 
-**Naming convention:** Sample Encoding Preset names use only uppercase ASCII letters, digits, and underscores. Names derived from a broadcast standard use the format `CVBS_<ENCODING>`; names for raw hardware captures use the format `RAW_<FORMAT>_<RATE>`.
-
-Sample Encoding Presets defined in this specification: `CVBS_10BIT`, `RAW_S16_28MSPS`, `RAW_S16_40MSPS`.
-
-Full preset definitions are maintained in a separate document: [sample-encoding-presets.md](sample-encoding-presets.md).
+Full definitions: [sample-encoding-presets.md](sample-encoding-presets.md)
 
 ---
 
 ## 7. Signal State Presets
 
-A **Signal State Preset** defines the processing state of the signal at the time of storage along three independent axes:
+A **Signal State Preset** defines the processing state of the signal at the time of storage along three independent axes: sample rate (standard 4×fsc vs. non-standard), TBC applied (yes vs. no), and burst locked (yes vs. no). The combination governs whether normative field sizes apply, whether signal level compliance is required, whether dropout coordinates are meaningful, and whether phase continuity can be assumed. The preset name is stored in the `signal_state_preset` field of the `cvbs_file` metadata table (see Section 5.2).
 
-| Axis | Standard state | Non-standard state |
-|---|---|---|
-| Sample rate | Exactly 4×fsc for the declared Video Standard Preset | Non-standard (e.g., oversampled at 28.6 MHz or 40 MHz) |
-| TBC applied | Yes — fixed samples per line, stable timing | No — line lengths vary, timing is raw |
-| Burst locked | Yes — subcarrier phase is stable and known | No — subcarrier phase drifts or is unknown |
-
-These axes are independent. In particular, a file can be TBC'd but not burst-locked (e.g., standard NTSC `.tbc` output from `ld-decode` or `vhs-decode`: timing is corrected but the subcarrier phase at each field is not anchored to a canonical 0° reference), and a file at a non-standard sample rate can still have TBC applied (oversampled TBC output).
-
-The Signal State Preset is stored in the `signal_state_preset` field of the `cvbs_file` metadata table (see Section 5.2) and governs several aspects of format interpretation:
-
-- **Normative field sizes** (Section 4.2) apply only when `tbc_applied = TRUE` and the sample rate is the standard 4×fsc. Without TBC there is no guarantee of a fixed sample count per line; consumers must use `byte_offset` / `byte_count` from `field_record` instead.
-- **Signal level compliance** (Section 3.1) is only meaningful when `tbc_applied = TRUE` and the Sample Encoding Preset is `CVBS_10BIT`. A raw RF capture contains signal levels that bear no relation to the preset's reference sample values.
-- **Dropout coordinates** (`sample_flags.startx` / `endx`) reference a sample index within a field line. This coordinate system is only stable when lines have a fixed, known length, i.e., when TBC has been applied.
-- **Subcarrier phase analysis** (Section 4.4) requires knowing whether burst locking was applied so that consumers can determine whether phase continuity can be assumed between fields.
-
-**Naming convention:** Signal State Preset names follow the pattern `<RATE>_<TBC>_<LOCK>`, where `<RATE>` is `STANDARD` (4×fsc) or `NONSTANDARD`, `<TBC>` is `TBC` or `RAW`, and `<LOCK>` is `LOCKED` or `UNLOCKED`. The `RAW` state implies unlocked (a raw signal with no TBC cannot be burst-locked in a stable sense), so `<RATE>_RAW` presets do not include a `_LOCKED` / `_UNLOCKED` suffix.
-
-Signal State Presets defined in this specification: `STANDARD_TBC_LOCKED`, `STANDARD_TBC_UNLOCKED`, `STANDARD_RAW`, `NONSTANDARD_TBC_LOCKED`, `NONSTANDARD_TBC_UNLOCKED`, `NONSTANDARD_RAW`.
-
-Full preset definitions are maintained in a separate document: [signal-state-presets.md](signal-state-presets.md).
+Full definitions: [signal-state-presets.md](signal-state-presets.md)
 
 ---
 

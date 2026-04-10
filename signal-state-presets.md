@@ -4,6 +4,23 @@ This document is part of the [CVBS File Format Specification](cvbs-file-format-s
 
 **Naming convention:** Signal State Preset names follow the pattern `<RATE>_<TBC>_<LOCK>`, where `<RATE>` is `STANDARD` (4×fsc) or `NONSTANDARD`, `<TBC>` is `TBC` or `RAW`, and `<LOCK>` is `LOCKED` or `UNLOCKED`. The `RAW` state implies unlocked (a raw signal with no TBC cannot be burst-locked in a stable sense), so `<RATE>_RAW` presets do not include a `_LOCKED` / `_UNLOCKED` suffix.
 
+A Signal State Preset captures three independent axes of the signal's processing state:
+
+| Axis | Standard state | Non-standard state |
+|---|---|---|
+| Sample rate | Exactly 4×fsc for the declared Video Standard Preset | Non-standard (e.g., oversampled at 28.6 MHz or 40 MHz) |
+| TBC applied | Yes — fixed samples per line, stable timing | No — line lengths vary, timing is raw |
+| Burst locked | Yes — subcarrier phase is stable and known | No — subcarrier phase drifts or is unknown |
+
+These axes are independent. In particular, a file can be TBC'd but not burst-locked (e.g., standard NTSC `.tbc` output from `ld-decode` or `vhs-decode`: timing is corrected but the subcarrier phase at each field is not anchored to a canonical 0° reference), and a file at a non-standard sample rate can still have TBC applied (oversampled TBC output).
+
+The preset governs several aspects of format interpretation:
+
+- **Normative field sizes** (Section 4.2 of the main specification) apply only when `tbc_applied = TRUE` and the sample rate is the standard 4×fsc. Without TBC there is no guarantee of a fixed sample count per line; consumers must use `byte_offset` / `byte_count` from `field_record` instead.
+- **Signal level compliance** (Section 3.1 of the main specification) is only meaningful when `tbc_applied = TRUE` and the Sample Encoding Preset is `CVBS_10BIT`. A raw RF capture contains signal levels that bear no relation to the preset's reference sample values.
+- **Dropout coordinates** (`sample_flags.startx` / `endx`) reference a sample index within a field line. This coordinate system is only stable when lines have a fixed, known length, i.e., when TBC has been applied.
+- **Subcarrier phase analysis** (Section 4.4 of the main specification) requires knowing whether burst locking was applied so that consumers can determine whether phase continuity can be assumed between fields.
+
 ---
 
 ## Preset: `STANDARD_TBC_LOCKED`

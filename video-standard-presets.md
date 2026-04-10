@@ -4,6 +4,13 @@ This document is part of the [CVBS File Format Specification](cvbs-file-format-s
 
 > **Note — Line Numbering Convention:** This specification uses **0-based field line numbering**: field line 0 is the first line of a field, and the last line of a field is numbered N−1 (where N is the total number of lines in that field). This follows software/coding convention and differs from the 1-based line numbering used in EBU and SMPTE broadcast standards, where lines are numbered starting from 1. Informational blocks that quote line numbers from EBU or SMPTE documents preserve the original 1-indexed numbering from those standards; each such block notes this explicitly. Additionally, EBU and SMPTE number lines sequentially across the entire interlaced frame; where such frame line numbers appear in informational blocks they are labelled as frame line numbers to distinguish them from the field-relative line numbers used throughout the rest of this specification.
 
+**Naming convention:** Preset names follow the pattern `PRIMARY` or `PRIMARY_SUBSET`, where `PRIMARY` identifies the base standard and `SUBSET` (when present) identifies a regional or technical variant. The underscore `_` separates the primary designator from the subset. Preset names use only uppercase ASCII letters, digits, and underscores; each name defined in this specification is unique. Additional presets may be defined in future revisions or companion documents.
+
+Examples:
+- `PAL` — the primary PAL standard
+- `NTSC` — the primary NTSC standard
+- `PAL_M` — a PAL-family variant using NTSC 525-line/60 Hz timing with PAL colour subcarrier modulation
+
 ---
 
 ## Preset: `PAL`
@@ -75,6 +82,14 @@ Derivations:
 
 Bytes = samples × 2 (each sample is one 16-bit little-endian word).
 
+**Colour field sequence:**
+
+The PAL colour sequence cycles over **8 fields**, numbered 1–8. Odd fields (1, 3, 5, 7) are 313-line fields; even fields (2, 4, 6, 8) are 312-line fields.
+
+> *(Informational — EBU tech3280 §1.1.1 and Fig. 1):* At 0° Sc/H (the normative PAL sampling phase), the +U axis of the subcarrier is at zero phase relative to the horizontal timing reference point (0H) on field line 0 of field 1. The colour burst phase rotates through a known pattern over the 8-field cycle. Any break in the expected Sc/H phase progression between consecutive stored fields indicates a discontinuity in the colour field sequence.
+
+> *(Informational — ld-decode/vhs-decode convention):* `isFirstField = true` corresponds to EBU Field 2 (the even/lower field, 312 lines) — Field 2 leads into its VSYNC interval with a half-line (0.5H) gap, not Field 1. PAL TBC output from `ld-decode` therefore conventionally starts with the even analogue field.
+
 ---
 
 ## Preset: `NTSC`
@@ -134,6 +149,14 @@ Derivations:
 
 Bytes = samples × 2 (each sample is one 16-bit little-endian word).
 
+**Colour field sequence:**
+
+The NTSC colour sequence cycles over **4 fields** (Field I, Field II, Field III, Field IV), forming colour frames A (fields I–II) and B (fields III–IV). Fields I and III are odd fields (263 lines); fields II and IV are even fields (262 lines).
+
+> *(Informational — SMPTE ST.0244 §3.2, §4.1.2):* At 0° SC/H (the normative NTSC sampling phase), sample 0 of line 10, field I, colour frame A is an I-axis (+123°) sample (SMPTE 1-indexed frame line 10 = field line 9 of field I in this specification's 0-indexed convention). Each of the 4 fields has a unique SC/H relationship; comparing the measured burst phase at sample 0 against the expected value for that field identifies its position in the 4-field sequence. A phase discontinuity between consecutive fields indicates a colour frame sequence break.
+
+> *(Informational — ld-decode/vhs-decode convention):* `isFirstField = true` corresponds to SMPTE Field I (the odd/upper field, 263 lines) — Field I leads into VSYNC with a full 1H gap. NTSC TBC output from `ld-decode` therefore conventionally starts with the odd analogue field.
+
 ---
 
 ## Preset: `PAL_M`
@@ -184,3 +207,17 @@ Derivations:
 - **PAL-M even:** 262 × 909 = **238,158 samples**
 
 Bytes = samples × 2 (each sample is one 16-bit little-endian word).
+
+**Colour field sequence:**
+
+Despite using 525-line/60 Hz timing, PAL-M uses a **8-field** colour sequence (not 4-field) due to the PAL colour subcarrier modulation. Phase verification follows the PAL SC/H approach applied to the 525-line/60 Hz timing structure.
+
+---
+
+## Non-Standard Extensions
+
+- **LaserDisc PAL Pilot Bursts:** Allowed to exceed standard blanking levels. When `preset = 'PAL'` and `has_ld_nonstandard_bursts = TRUE` in the metadata, the file contains PAL pilot bursts as defined by IEC 60856-1986; consumers must not treat blanking-region samples outside the standard protected range as errors.
+- **LaserDisc NTSC Additional Bursts:** When `preset = 'NTSC'` and `has_ld_nonstandard_bursts = TRUE`, the file contains additional colour bursts as defined by IEC 60857-1986; the same tolerance applies.
+- **DC Offset:** Not required. The signed 16-bit storage format provides sufficient negative headroom below 0 to accommodate chroma excursions without clipping.
+
+
