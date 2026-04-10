@@ -37,9 +37,7 @@ The preset governs several aspects of format interpretation:
 
 **Signal level compliance:** Required (Section 3.1) when Sample Encoding Preset is `CVBS_10BIT`.
 
-**`sample_flags`:** Valid and meaningful.
-
-**`sc_h_phase_degrees`:** Should be populated if the Sc/H phase is known.
+**`sample_flags` table entries:** Valid and meaningful.
 
 ---
 
@@ -57,9 +55,7 @@ The preset governs several aspects of format interpretation:
 
 **Signal level compliance:** Required (Section 3.1) when Sample Encoding Preset is `CVBS_10BIT`.
 
-**`sample_flags`:** Valid and meaningful.
-
-**`sc_h_phase_degrees`:** `NULL` (phase is not stably known field-to-field).
+**`sample_flags` table entries:** Valid and meaningful.
 
 ---
 
@@ -77,7 +73,7 @@ The preset governs several aspects of format interpretation:
 
 **Signal level compliance:** Not required.
 
-**`sample_flags`:** Should be left empty.
+**`sample_flags` table entries:** Should be left empty.
 
 ---
 
@@ -95,11 +91,7 @@ The preset governs several aspects of format interpretation:
 
 **Signal level compliance:** Not applicable for `CVBS_10BIT` amplitude values; consumers must use calibration data to map sample values to analogue levels.
 
-**`sample_flags`:** Valid (sample coordinates are stable because TBC was applied), but `startx` / `endx` values reference samples at the non-standard sample rate.
-
-**`sample_rate_numerator` / `sample_rate_denominator`:** Should be populated.
-
-**`sc_h_phase_degrees`:** Should be populated if the Sc/H phase is known.
+**`sample_flags` table entries:** Valid (sample coordinates are stable because TBC was applied), but `startx` / `endx` values reference samples at the non-standard sample rate.
 
 ---
 
@@ -117,11 +109,7 @@ The preset governs several aspects of format interpretation:
 
 **Signal level compliance:** Not applicable.
 
-**`sample_flags`:** Valid for stable sample coordinate references.
-
-**`sample_rate_numerator` / `sample_rate_denominator`:** Should be populated.
-
-**`sc_h_phase_degrees`:** `NULL`.
+**`sample_flags` table entries:** Valid for stable sample coordinate references.
 
 ---
 
@@ -139,6 +127,4 @@ The preset governs several aspects of format interpretation:
 
 **Signal level compliance:** Not applicable.
 
-**`sample_flags`:** Should be left empty.
-
-**`sample_rate_numerator` / `sample_rate_denominator`:** Should be populated.
+**`sample_flags` table entries:** Should be left empty.

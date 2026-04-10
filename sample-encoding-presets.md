@@ -21,13 +21,11 @@ This encoding is known as the **cvbs-encode** encoding.
 
 **Protected values:** The bottom of the 10-bit range (values 0–3) and the top (values 1020–1023) are reserved (must never appear in conformant output). These exclusions are defined per Video Standard Preset.
 
-**Signal level compliance:** When the Signal State Preset has `tbc_applied = TRUE`, sample data must conform to the amplitude mapping defined above. Exceptions (e.g., LaserDisc PAL pilot bursts) must be flagged via `has_ld_nonstandard_bursts` in the metadata.
-
 ---
 
 ## Preset: `RAW_S16_28MSPS`
 
-**Applicable sources:** DomesdayDuplicator and similar hardware capturers operating at approximately 28.6 MHz (commonly described as 28.8 MSPS in documentation for that hardware).
+**Applicable sources:** CX Cards and similar hardware capturers operating at approximately 28.6 MHz.
 
 **Word format:** Each sample is stored as a **signed 16-bit little-endian integer**. Values span the full signed 16-bit range (−32768 to +32767) and represent the raw, unscaled ADC output of the capturing hardware.
 
@@ -37,8 +35,6 @@ This encoding is known as the **cvbs-encode** encoding.
 
 **Signal level compliance:** Signal level compliance (Section 3.1) is not meaningful for this preset. Signal levels bear no fixed relationship to the reference values defined by the Video Standard Preset.
 
-**TBC and burst locking:** Files using this preset will normally have the Signal State Preset `NONSTANDARD_RAW`, as raw hardware captures are neither time-base corrected nor burst-locked by definition.
-
 ---
 
 ## Preset: `RAW_S16_40MSPS`
@@ -47,7 +43,7 @@ This encoding is known as the **cvbs-encode** encoding.
 
 **Word format:** Each sample is stored as a **signed 16-bit little-endian integer**. Values span the full signed 16-bit range (−32768 to +32767) and represent the raw, unscaled ADC output of the capturing hardware.
 
-**Sample rate:** The nominal sample rate for this preset is **40,000,000 Hz** (40 MHz). The exact rate should be recorded in `sample_rate_numerator` / `sample_rate_denominator` if it differs from the nominal.
+**Sample rate:** The nominal sample rate for this preset is **40,000,000 Hz** (40 MHz). 
 
 **Amplitude mapping:** No standardised mapping between stored values and analogue voltage levels is defined at the preset level. Calibration information must be derived or externally supplied by the consumer.
 
