@@ -1,0 +1,5 @@
+nav:
+  - CVBS File Format Specification: index.md
+  - Video Standard Presets: video-standard-presets.md
+  - Sample Encoding Presets: sample-encoding-presets.md
+  - Signal State Presets: signal-state-presets.md

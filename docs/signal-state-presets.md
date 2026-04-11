@@ -1,6 +1,6 @@
 # Signal State Preset Definitions
 
-This document is part of the [CVBS File Format Specification](cvbs-file-format-specification.md). It contains the normative Signal State Preset definitions referenced in Section 7 of that specification.
+This document is part of the [CVBS File Format Specification](index.md). It contains the normative Signal State Preset definitions referenced in Section 7 of that specification.
 
 **Naming convention:** Signal State Preset names follow the pattern `<RATE>_<TBC>_<LOCK>`, where `<RATE>` is `STANDARD` (4×fsc) or `NONSTANDARD`, `<TBC>` is `TBC` or `RAW`, and `<LOCK>` is `LOCKED` or `UNLOCKED`. The `RAW` state implies unlocked (a raw signal with no TBC cannot be burst-locked in a stable sense), so `<RATE>_RAW` presets do not include a `_LOCKED` / `_UNLOCKED` suffix.
 

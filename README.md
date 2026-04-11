@@ -2,7 +2,7 @@
 
 This repository contains the agreed common file format specification for representing decoded analogue video (CVBS — Colour, Video, Blank, and Sync) as used by [ld-decode](https://github.com/happycube/ld-decode), [vhs-decode](https://github.com/oyvindln/vhs-decode), and related tools in the decode family.
 
-> **PDF version:** A rendered PDF of the specification is available in the [latest GitHub release](../../releases/latest).
+> **Documentation:** The full specification is published at **[simoninns.github.io/cvbs-file-format-specification](https://simoninns.github.io/cvbs-file-format-specification)**.
 
 ## Purpose
 
@@ -26,7 +26,7 @@ The latest [release](../../releases/latest) of this repository represents the cu
 
 ## Specification
 
-The full specification is in [cvbs-file-format-specification.md](cvbs-file-format-specification.md). It is divided into two parts:
+The full specification is in [docs/cvbs-file-format-specification.md](docs/cvbs-file-format-specification.md). It is divided into two parts:
 
 - **Part 1 (Agreed):** File naming, sample encoding, field sizes, compliance tables, and field ordering — stable for implementation
 - **Part 2 (Under Discussion):** Audio track storage and the metadata schema — subject to change

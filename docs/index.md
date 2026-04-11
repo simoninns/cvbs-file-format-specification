@@ -2,15 +2,15 @@
 
 ---
 
-## 1. Introduction
+## Introduction
 
 This document defines the **CVBS File Format** for use with the `ld-decode`, `vhs-decode` and related projects. **CVBS** (Colour, Video, Blank, and Sync) describes the full class of analogue video signal — both composite (luma and chroma combined into a single signal) and component YC representations carry the same Colour, Video, Blank, and Sync elements and are therefore both CVBS signals.
 
 The format is organised around three independent **preset systems**, each of which captures a distinct dimension of the signal:
 
-- **Video Standard Presets** (Section 4): define the timing and structural parameters of the video signal — line counts, field rates, horizontal sample structure, colour field sequence, and the normative sample level tables for standards-compliant signals.
-- **Sample Encoding Presets** (Section 6): define the bit depth, word format, and amplitude mapping used when the sample data was recorded.
-- **Signal State Presets** (Section 7): define the processing state of the signal at the time of storage — whether a standard 4×fsc sample rate was used, whether time-base correction (TBC) was applied, and whether the decoder was phase-locked to the colour burst.
+- [**Video Standard Presets**](#video-standard-presets): define the timing and structural parameters of the video signal — line counts, field rates, horizontal sample structure, colour field sequence, and the normative sample level tables for standards-compliant signals.
+- [**Sample Encoding Presets**](#sample-encoding-presets): define the bit depth, word format, and amplitude mapping used when the sample data was recorded.
+- [**Signal State Presets**](#signal-state-presets): define the processing state of the signal at the time of storage — whether a standard 4×fsc sample rate was used, whether time-base correction (TBC) was applied, and whether the decoder was phase-locked to the colour burst.
 
 Every CVBS file is described by one preset from each system. Together they fully specify how to locate field boundaries, interpret sample amplitudes, and determine the reliability of phase and level measurements.
 
@@ -18,7 +18,7 @@ The format accommodates **non-standard cases** (e.g., LaserDisc PAL pilot bursts
 
 ---
 
-## 2. File Naming Convention
+## File Naming Convention
 
 Each file type uses a distinct extension:
 
@@ -28,26 +28,26 @@ Each file type uses a distinct extension:
 
 ---
 
-## 3. Video Data Format
+## Video Data Format
 
-### 3.1. Sample Encoding
+### Sample Encoding
 
-The physical encoding and amplitude mapping of samples are defined by the **Sample Encoding Preset** declared for the file (see Section 6). The main properties governed by the sample encoding preset are:
+The physical encoding and amplitude mapping of samples are defined by the [**Sample Encoding Preset**](#sample-encoding-presets) declared for the file. The main properties governed by the sample encoding preset are:
 
 - **Word format:** the integer width, signedness, and byte order of each stored sample word.
 - **Amplitude mapping:** the relationship between the stored integer value and the analogue signal amplitude — specifically, where sync tip, blanking, black, white, and peak levels fall within the integer range.
 - **Headroom:** whether negative or positive values beyond the nominal 0–1023 range are meaningful.
 
-The standard encoding preset (`CVBS_10BIT`) represents the normative production output of `ld-decode`, `vhs-decode`, and similar tools. The raw capture presets represent unscaled ADC output from hardware capturers such as the DomesdayDuplicator. See [sample-encoding-presets.md](sample-encoding-presets.md) for the full definitions.
+The standard encoding preset (`CVBS_10BIT`) represents the normative production output of `ld-decode`, `vhs-decode`, and similar tools. The raw capture presets represent unscaled ADC output from hardware capturers such as the DomesdayDuplicator. See [sample-encoding-presets](sample-encoding-presets.md) for the full definitions.
 
 This specification supports two CVBS (Colour, Video, Blank, and Sync) storage representations, which differ only in how colour information is carried:
 
 - **Composite CVBS:** Single file containing luma and chroma combined into one signal.
 - **Dual-File YC CVBS:** Separate files for luma (Y) and chroma (C), keeping the colour components separated.
 
-The specific sample range — sync tip, blanking, black, white, and peak levels together with any reserved protected values — is defined by the declared Sample Encoding Preset (see Section 6).
+The specific sample range — sync tip, blanking, black, white, and peak levels together with any reserved protected values — is defined by the declared [Sample Encoding Preset](#sample-encoding-presets).
 
-### 3.2. File Layout
+### File Layout
 
 Video data is stored field-by-field with no additional framing or headers:
 
@@ -59,33 +59,33 @@ Video data is stored field-by-field with no additional framing or headers:
 
 ---
 
-## 4. Video Standard Presets
+## Video Standard Presets
 
-### 4.1. Preset System
+### Preset System
 
-A **Video Standard Preset** is a named configuration that fully defines all timing and structural parameters for a video standard: sampling rate, line counts, field structure, sample level tables, colour field sequence length, and references to the external standards on which the preset is based. These presets do **not** define the physical sample word format or the processing state of the signal — those are covered by the Sample Encoding Preset (Section 6) and Signal State Preset (Section 7) respectively.
+A **Video Standard Preset** is a named configuration that fully defines all timing and structural parameters for a video standard: sampling rate, line counts, field structure, sample level tables, colour field sequence length, and references to the external standards on which the preset is based. These presets do **not** define the physical sample word format or the processing state of the signal — those are covered by the [Sample Encoding Preset](#sample-encoding-presets) and [Signal State Preset](#signal-state-presets) respectively.
 
-The `preset` field in the `cvbs_file` metadata table (see Section 5.2) identifies which Video Standard Preset applies to a given CVBS file. Consumers must implement a preset in full; an unrecognised preset name must not be silently interpreted — the consumer must refuse to process the file or report an error.
+The `preset` field in the `cvbs_file` metadata table (see the [`cvbs_file` table](#cvbs_file-table)) identifies which Video Standard Preset applies to a given CVBS file. Consumers must implement a preset in full; an unrecognised preset name must not be silently interpreted — the consumer must refuse to process the file or report an error.
 
-### 4.2. Preset Definitions
+### Preset Definitions
 
-Full definitions — including naming convention, sampling rates, sample level tables, horizontal and vertical structure, and normative field sizes — are in [video-standard-presets.md](video-standard-presets.md).
+Full definitions — including naming convention, sampling rates, sample level tables, horizontal and vertical structure, and normative field sizes — are in [video-standard-presets](video-standard-presets.md).
 
-### 4.3. Non-Standard Extensions
+### Non-Standard Extensions
 
-Certain source materials (e.g., LaserDisc) carry signals in the blanking interval that fall outside the standard protected sample range. See [video-standard-presets.md](video-standard-presets.md#non-standard-extensions) for details.
+Certain source materials (e.g., LaserDisc) carry signals in the blanking interval that fall outside the standard protected sample range. See [video-standard-presets](video-standard-presets.md#non-standard-extensions) for details.
 
-### 4.4. Field Ordering and Phase Verification
+### Field Ordering and Phase Verification
 
-Fields are stored sequentially in the file with no embedded markers identifying where in the colour field sequence the file begins (see Section 3.2). **No assumption must be made that the first field in a file is field 1 (or field I) of the colour sequence.** Capture sources (e.g., LaserDisc RF captures) may begin recording at any point in the colour field cycle, and the sequence may contain discontinuities caused by source media capture issues such as disc jumps, skipped fields, or dropouts.
+Fields are stored sequentially in the file with no embedded markers identifying where in the colour field sequence the file begins (see [File Layout](#file-layout)). **No assumption must be made that the first field in a file is field 1 (or field I) of the colour sequence.** Capture sources (e.g., LaserDisc RF captures) may begin recording at any point in the colour field cycle, and the sequence may contain discontinuities caused by source media capture issues such as disc jumps, skipped fields, or dropouts.
 
 Consumers must verify field ordering independently by examining the colour burst phase of each field and checking that consecutive fields exhibit the expected phase progression for the declared preset.
 
-Preset-specific phase progression rules and the `ld-decode`/`vhs-decode` field ordering convention are in [video-standard-presets.md](video-standard-presets.md#field-ordering-and-phase-verification).
+Preset-specific phase progression rules and the `ld-decode`/`vhs-decode` field ordering convention are in [video-standard-presets](video-standard-presets.md#field-ordering-and-phase-verification).
 
 ---
 
-## 5. Metadata Schema
+## Metadata Schema
 
 The metadata file is **optional**. A CVBS file is self-contained as raw sample data and can be processed without a metadata file provided the consumer obtains the necessary parameters (such as video standard, field count, and colour sequence position) by other means — for example, from user-supplied command-line arguments or application settings.
 
@@ -95,7 +95,7 @@ When present, metadata is stored in a **separate `.meta` file** alongside the vi
 
 The metadata file is a **SQLite database** containing the tables defined below.
 
-### 5.1. SQLite Metadata Schema
+### SQLite Metadata Schema
 
 ```sql
 PRAGMA user_version = 4;
@@ -154,7 +154,7 @@ CREATE TABLE sample_flags (
 );
 ```
 
-### 5.2. `cvbs_file` Table
+### `cvbs_file` Table
 
 The `cvbs_file` table records file-level metadata. There is one row per CVBS file.
 
@@ -168,21 +168,21 @@ The `cvbs_file` table records file-level metadata. There is one row per CVBS fil
 
 - **Type:** TEXT
 - **Nullable:** No
-- **Range:** Any Video Standard Preset name defined in [video-standard-presets.md](video-standard-presets.md)
+- **Range:** Any Video Standard Preset name defined in [video-standard-presets](video-standard-presets.md)
 - **Description:** Identifies the Video Standard Preset that applies to this CVBS file. The preset name uniquely determines all timing and structural parameters — sampling rate, line counts, field structure, sample level tables, and colour field sequence length. Consumers must implement the named preset in full; an unrecognised preset name must not be silently interpreted.
 
 #### `sample_encoding_preset`
 
 - **Type:** TEXT
 - **Nullable:** No
-- **Range:** Any Sample Encoding Preset name defined in [sample-encoding-presets.md](sample-encoding-presets.md)
+- **Range:** Any Sample Encoding Preset name defined in [sample-encoding-presets](sample-encoding-presets.md)
 - **Description:** Identifies the Sample Encoding Preset that defines the physical word format and amplitude mapping of the sample data.
 
 #### `signal_state_preset`
 
 - **Type:** TEXT
 - **Nullable:** No
-- **Range:** Any Signal State Preset name defined in [signal-state-presets.md](signal-state-presets.md)
+- **Range:** Any Signal State Preset name defined in [signal-state-presets](signal-state-presets.md)
 - **Description:** Identifies the Signal State Preset that describes the processing state of the signal at the time of storage — whether the sample rate is standard 4×fsc, whether TBC was applied, and whether burst locking was applied.
 
 #### `signal_type`
@@ -223,13 +223,13 @@ The `cvbs_file` table records file-level metadata. There is one row per CVBS fil
 - **Type:** INTEGER
 - **Nullable:** Yes
 - **Range:** `NULL`, or an INTEGER value interpreted according to the declared presets
-- **Description:** Optional override for non-standard black levels. `NULL` means no explicit override is provided and consumers should use the default black level behavior defined by the declared Video Standard Preset and Sample Encoding Preset (see [video-standard-presets.md](video-standard-presets.md) and [sample-encoding-presets.md](sample-encoding-presets.md)). A non-`NULL` value provides an explicit black-level override in the integer domain of the declared Sample Encoding Preset. For Sample Encoding Presets where black-level calibration is not defined or not meaningful (for example raw capture presets), this field should be `NULL`.
+- **Description:** Optional override for non-standard black levels. `NULL` means no explicit override is provided and consumers should use the default black level behavior defined by the declared Video Standard Preset and Sample Encoding Preset (see [video-standard-presets](video-standard-presets.md) and [sample-encoding-presets](sample-encoding-presets.md)). A non-`NULL` value provides an explicit black-level override in the integer domain of the declared Sample Encoding Preset. For Sample Encoding Presets where black-level calibration is not defined or not meaningful (for example raw capture presets), this field should be `NULL`.
 
 #### `has_ld_nonstandard_bursts`
 
 - **Type:** BOOLEAN
 - **Nullable:** Yes
-- **Description:** Indicates the presence of LaserDisc-specific non-standard burst signals in the blanking interval. The meaning is preset-specific; see [video-standard-presets.md](video-standard-presets.md#non-standard-extensions) for details. `NULL` means not applicable or not known.
+- **Description:** Indicates the presence of LaserDisc-specific non-standard burst signals in the blanking interval. The meaning is preset-specific; see [video-standard-presets](video-standard-presets.md#non-standard-extensions) for details. `NULL` means not applicable or not known.
 
 #### `capture_notes`
 
@@ -237,7 +237,7 @@ The `cvbs_file` table records file-level metadata. There is one row per CVBS fil
 - **Nullable:** Yes
 - **Description:** Free-form human-readable notes about the capture. May include source material description, known non-compliance (e.g., LaserDisc PAL pilot bursts), equipment details, or other contextual information. `NULL` if no notes are recorded.
 
-### 5.3. `field_record` Table
+### `field_record` Table
 
 The `field_record` table records per-field metadata. There is one row per field stored in the CVBS data file.
 
@@ -273,7 +273,7 @@ The `field_record` table records per-field metadata. There is one row per field 
 - **Nullable:** Yes
 - **Description:** Byte length of this field's sample data in the CVBS data file. `NULL` under the same conditions as `byte_offset`. Must be non-null if and only if `byte_offset` is non-null.
 
-### 5.4. `sample_flags` Table
+### `sample_flags` Table
 
 The `sample_flags` table records sample-level anomaly flags within individual fields. Each row identifies a contiguous horizontal run of flagged samples on a specific line of a specific field.
 
@@ -321,25 +321,35 @@ The `sample_flags` table records sample-level anomaly flags within individual fi
 
 ---
 
-## 6. Sample Encoding Presets
+## Sample Encoding Presets
 
-A **Sample Encoding Preset** defines the physical word format and amplitude mapping applied to every sample in the file: the integer width, signedness, byte order, and the relationship between stored values and analogue signal levels (sync tip, blanking, black, white, peak). The preset name is stored in the `sample_encoding_preset` field of the `cvbs_file` metadata table (see Section 5.2).
+A **Sample Encoding Preset** defines the physical word format and amplitude mapping applied to every sample in the file: the integer width, signedness, byte order, and the relationship between stored values and analogue signal levels (sync tip, blanking, black, white, peak). The preset name is stored in the `sample_encoding_preset` field of the `cvbs_file` metadata table (see the [`cvbs_file` table](#cvbs_file-table)).
 
-Full definitions: [sample-encoding-presets.md](sample-encoding-presets.md)
-
----
-
-## 7. Signal State Presets
-
-A **Signal State Preset** defines the processing state of the signal at the time of storage along three independent axes: sample rate (standard 4×fsc vs. non-standard), TBC applied (yes vs. no), and burst locked (yes vs. no). The combination governs whether normative field sizes apply, whether signal level compliance is required, whether dropout coordinates are meaningful, and whether phase continuity can be assumed. The preset name is stored in the `signal_state_preset` field of the `cvbs_file` metadata table (see Section 5.2).
-
-Full definitions: [signal-state-presets.md](signal-state-presets.md)
+Full definitions: [sample-encoding-presets](sample-encoding-presets.md)
 
 ---
 
-## 8. Audio Data
+## Signal State Presets
 
-Audio tracks are stored as separate **48 kHz Stereo PCM WAV** files. Up to 16 audio tracks are supported, each as a separate file.
+A **Signal State Preset** defines the processing state of the signal at the time of storage along three independent axes: sample rate (standard 4×fsc vs. non-standard), TBC applied (yes vs. no), and burst locked (yes vs. no). The combination governs whether normative field sizes apply, whether signal level compliance is required, whether dropout coordinates are meaningful, and whether phase continuity can be assumed. The preset name is stored in the `signal_state_preset` field of the `cvbs_file` metadata table (see the [`cvbs_file` table](#cvbs_file-table)).
+
+Full definitions: [signal-state-presets](signal-state-presets.md)
+
+---
+
+## Audio Data
+
+Audio tracks are stored as separate **48 kHz Stereo PCM WAV** files (no other formats, sample rates or encoding are permitted). Up to 16 audio tracks are supported, each as a separate file.
+
+Each file must be a standard **RIFF WAV** file with the following properties:
+
+- **Container:** RIFF/WAVE with a standard RIFF header (`RIFF` chunk, `WAVE` format identifier, `fmt ` sub-chunk, `data` sub-chunk)
+- **Format tag:** PCM (`0x0001`)
+- **Channels:** 2 (stereo)
+- **Sample rate:** 48000 Hz
+- **Bit depth:** 16-bit signed integer, little-endian
+
+No compression, no extended `fmt ` chunks, and no non-standard RIFF variants are permitted.
 
 **File naming:** `<basename>_audio_<track_number>.wav`
 
@@ -347,24 +357,3 @@ Track number is zero-padded to two digits: `00`, `01`, `02`, …, `16`.
 
 ---
 
-## 9. Open Questions and Items Under Discussion
-
-1. **Additional video standard presets:** Are additional Video Standard Presets required? Candidates include SECAM, PAL-N, and PAL-B/G variants. The naming convention (`PRIMARY_SUBSET`) accommodates these without structural changes.
-
-2. **Compression:** A lossless compression option has been proposed for video and audio data:
-   - **Video:** FLAC, gzip, or zstd applied to `.composite`, `.y`, `.c` files; compressed files use the `.gz` suffix (e.g., `<basename>.composite.gz`). Compression applied per-field to allow random access.
-   - **Audio:** FLAC for `.wav` files; compressed files use the `.flac` suffix.
-   - Should compression be mandatory, optional, or user-selectable? (Current preference: user-selectable.)
-   - Should the format support chunked compression for streaming or partial access? (Current preference: yes.)
-   - Should a `compression` field be added to the metadata schema to record the method used?
-   - Are there preferred algorithms for specific use cases (archival vs. editing)?
-
-3. **Reference tools and test vectors:** No reference tools exist yet. Test vector files for PAL, NTSC, and PAL-M with known metadata are desired to validate conformance.
-
-4. **Additional sample encoding presets:** Are further raw capture presets needed (e.g., for 8-bit ADC output, or for specific hardware capturers with known gain/offset calibrations that would allow a defined amplitude mapping)?
-
-5. **Additional signal state presets:** The current six presets cover the most practically important combinations. Are there additional combinations required? For example, a `STANDARD_RAW_LOCKED` state (standard rate, no TBC, but burst is locked) is theoretically possible; is it encountered in practice?
-
-6. **`tbc_applied` / `burst_locked` as explicit boolean columns:** The current design encodes these properties inside the Signal State Preset name. An alternative is to retain them as explicit boolean columns in the metadata schema alongside the preset name, for ease of querying. Under discussion.
-
-7. **Audio track count:** The maximum of 16 audio tracks is a provisional limit. Is this sufficient for all anticipated sources?

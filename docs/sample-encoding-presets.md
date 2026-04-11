@@ -1,6 +1,6 @@
 # Sample Encoding Preset Definitions
 
-This document is part of the [CVBS File Format Specification](cvbs-file-format-specification.md). It contains the normative Sample Encoding Preset definitions referenced in Section 6 of that specification.
+This document is part of the [CVBS File Format Specification](index.md). It contains the normative Sample Encoding Preset definitions referenced in Section 6 of that specification.
 
 **Naming convention:** Sample Encoding Preset names use only uppercase ASCII letters, digits, and underscores. Names derived from a broadcast standard use the format `CVBS_<ENCODING>`; names for raw hardware captures use the format `RAW_<FORMAT>_<RATE>`.
 
@@ -17,7 +17,7 @@ This document is part of the [CVBS File Format Specification](cvbs-file-format-s
 
 This encoding is known as the **cvbs-encode** encoding.
 
-**Amplitude mapping:** The sync tip, blanking, black, white, and peak 10-bit sample values are defined by the Video Standard Preset (see Section 4.2 of the main specification). The sample level tables in [video-standard-presets.md](video-standard-presets.md) are the normative reference values for this encoding.
+**Amplitude mapping:** The sync tip, blanking, black, white, and peak 10-bit sample values are defined by the Video Standard Preset (see Section 4.2 of the main specification). The sample level tables in [video-standard-presets](video-standard-presets.md) are the normative reference values for this encoding.
 
 **Protected values:** The bottom of the 10-bit range (values 0–3) and the top (values 1020–1023) are reserved (must never appear in conformant output). These exclusions are defined per Video Standard Preset.
 
@@ -29,7 +29,7 @@ This encoding is known as the **cvbs-encode** encoding.
 
 **Word format:** Each sample is stored as a **signed 16-bit little-endian integer**. Values span the full signed 16-bit range (−32768 to +32767) and represent the raw, unscaled ADC output of the capturing hardware.
 
-**Sample rate:** The nominal sample rate for this preset is **28,636,360 Hz** (= 2 × 14,318,180 Hz, twice the NTSC colour subcarrier frequency). The exact rate may differ slightly between hardware units; the precise rate should be recorded in `sample_rate_numerator` / `sample_rate_denominator` if known.
+**Sample rate:** The nominal sample rate for this preset is **28,636,360 Hz** (= 2 × 14,318,180 Hz, twice the NTSC colour subcarrier frequency). The exact rate may differ slightly between hardware units.
 
 **Amplitude mapping:** No standardised mapping between stored values and analogue voltage levels is defined at the preset level. The relationship between the integer range and the analogue signal levels (sync, blanking, black, white) depends on the hardware gain and DC offset settings at the time of capture. Consumers must derive or externally supply this calibration information.
 

@@ -1,6 +1,6 @@
 # Video Standard Preset Definitions
 
-This document is part of the [CVBS File Format Specification](cvbs-file-format-specification.md). It contains the normative Video Standard Preset definitions referenced in Section 4.2 of that specification.
+This document is part of the [CVBS File Format Specification](index.md). It contains the normative Video Standard Preset definitions referenced in Section 4.2 of that specification.
 
 > **Note — Line Numbering Convention:** This specification uses **0-based field line numbering**: field line 0 is the first line of a field, and the last line of a field is numbered N−1 (where N is the total number of lines in that field). This follows software/coding convention and differs from the 1-based line numbering used in EBU and SMPTE broadcast standards, where lines are numbered starting from 1. Informational blocks that quote line numbers from EBU or SMPTE documents preserve the original 1-indexed numbering from those standards; each such block notes this explicitly. Additionally, EBU and SMPTE number lines sequentially across the entire interlaced frame; where such frame line numbers appear in informational blocks they are labelled as frame line numbers to distinguish them from the field-relative line numbers used throughout the rest of this specification.
 
