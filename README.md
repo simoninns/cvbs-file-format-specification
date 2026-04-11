@@ -22,11 +22,11 @@ The format stores 10-bit video samples as signed 16-bit little-endian integers, 
 
 ## Versioning
 
-The latest [release](../../releases/latest) of this repository represents the current stable version of the specification. Any changes on the default branch between releases should be considered draft and subject to change.
+The latest [release](https://github.com/simoninns/cvbs-file-format-specification/releases/latest) of this repository represents the current stable version of the specification. Any changes on the default branch between releases should be considered draft and subject to change.
 
 ## Specification
 
-The full specification is in [docs/cvbs-file-format-specification.md](docs/cvbs-file-format-specification.md). It is divided into two parts:
+The full specification is in [docs/index.md](docs/index.md). It is divided into two parts:
 
 - **Part 1 (Agreed):** File naming, sample encoding, field sizes, compliance tables, and field ordering — stable for implementation
 - **Part 2 (Under Discussion):** Audio track storage and the metadata schema — subject to change
