@@ -57,21 +57,22 @@ This encoding is known as the **cvbs-encode** encoding.
 
 **Applicable sources:** Snell & Wilcox TPG21 test pattern generator and compatible equipment producing 10-bit CVBS output files.
 
-**Word format:** Each sample is stored as an **unsigned 16-bit little-endian integer**. The 10-bit sample value (0–1023) is placed in the **most-significant bits** of the 16-bit word (bits 15–6), with the **six least-significant bits set to zero** (LSB-padded). The stored 16-bit value is therefore the 10-bit value multiplied by 64 (i.e. left-shifted by 6):
+**Word format:** Each sample is stored as a **signed 16-bit little-endian integer**. The 10-bit sample value (0–1023) is encoded using a fixed device offset of 508 and a scale factor of 64:
 
 $$
-\text{uint16} = \text{value}_{10\text{-bit}} \times 64
+\text{int16} = (\text{value}_{10\text{-bit}} - 508) \times 64
 $$
 
-To recover the original 10-bit sample value, right-shift the unsigned 16-bit word by 6:
+The six least-significant bits of every stored word are always zero; this is a structural consequence of the ×64 scaling, not bit-field padding. To recover the original 10-bit sample value:
 
 $$
-\text{value}_{10\text{-bit}} = \lfloor \text{uint16} / 64 \rfloor
+\text{value}_{10\text{-bit}} = \frac{\text{int16}}{64} + 508
 $$
 
-- **Unsigned container:** Values are unsigned; the 16-bit range is 0–65535. Negative headroom (e.g. for sub-sync-tip excursions) is not representable in this format.
-- **Maximum encoded value:** The highest legal 10-bit value (1023) is stored as 65472 (= 1023 × 64).
+- **Signed container:** The 16-bit range is −32768–32767. The offset of 508 centres the signal such that 10-bit values above 508 produce non-negative int16 words, and values below 508 produce negative words.
+- **Maximum legal encoded value:** The highest legal 10-bit value (1019) is stored as (1019 − 508) × 64 = 32704.
+- **Device constant:** The offset 508 is a hardware constant of the Snell & Wilcox TPG21; it is not derived from any video standard and applies identically to PAL and NTSC files.
 
-**Amplitude mapping:** The sync tip, blanking, black, white, and peak 10-bit sample values are defined by the Video Standard Preset (see Section 4.2 of the main specification). The sample level tables in [video-standard-presets](video-standard-presets.md) are the normative reference values, interpreted in the 10-bit domain before applying the MSB-alignment scaling described above.
+**Amplitude mapping:** The sync tip, blanking, black, white, and peak 10-bit sample values are defined by the Video Standard Preset (see Section 4.2 of the main specification). The sample level tables in [video-standard-presets](video-standard-presets.md) are the normative reference values, interpreted in the 10-bit domain before applying the signed encoding described above.
 
-**Signal level compliance:** Signal level compliance (Section 3.1) applies to this preset. The protected exclusion ranges at the bottom (values 0–3) and top (values 1020–1023) of the 10-bit domain remain reserved, corresponding to stored uint16 values 0–192 and 65280–65472 respectively.
+**Signal level compliance:** Signal level compliance (Section 3.1) applies to this preset. The protected exclusion ranges at the bottom (values 0–3) and top (values 1020–1023) of the 10-bit domain remain reserved. Values 1020–1023 cannot be represented: they would exceed the int16 maximum of 32767 with this encoding. A compliant encoder must clamp to [4, 1019] before encoding.
