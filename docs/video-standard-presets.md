@@ -214,15 +214,26 @@ Despite using 525-line/60 Hz timing, PAL-M uses a **8-field** colour sequence (n
 
 ---
 
-## Field Ordering and Phase Verification
+## Frame Ordering and Phase Verification
 
-Fields are stored sequentially in file order, but their position within a colour field sequence is not encoded in-band. Consumers must determine sequence position by measuring burst phase and checking that adjacent fields follow the expected preset-specific progression.
+Video Standard Presets are frame-described. Frames are stored sequentially in file order, and each frame is composed of two interlaced fields (odd/even) per the selected preset. Position within the colour field sequence is not encoded in-band; consumers determine sequence position by measuring burst phase and checking that successive frames preserve the expected preset-specific odd/even pairing and phase progression.
 
 - **PAL:** verify against the 8-field progression described in the PAL preset section above.
 - **NTSC:** verify against the 4-field progression described in the NTSC preset section above.
 - **PAL_M:** verify against the 8-field progression described in the PAL_M preset section above.
 
 `ld-decode` and `vhs-decode` field-ordering conventions are documented in the informational notes in each preset section.
+
+**Frame boundary and length integrity (normative):**
+
+When a Signal State Preset requires locked timing at the standard 4x fsc sample rate (for example `tbc_applied = TRUE` and burst/colour lock sufficient to preserve sequence continuity), producers shall preserve frame boundaries and exact frame sample counts throughout the stream. For affected presets, each frame shall contain exactly one odd field and one even field in the correct preset-specific progression, with no skipped fields, duplicated fields, or re-pairing that would shift frame boundary alignment.
+
+For these presets, the exact frame sample counts are:
+- **PAL:** 709,379 samples/frame (355,257 odd + 354,122 even)
+- **NTSC:** 477,750 samples/frame (239,330 odd + 238,420 even)
+- **PAL_M:** 477,225 samples/frame (239,067 odd + 238,158 even)
+
+If a producer cannot guarantee this lock (for example because source skips, repeated source fields, dropouts in timing recovery, or other instability prevent reliable frame-to-frame sequence continuity), that producer shall not claim the corresponding locked preset constraints as normative for that content.
 
 ---
 
