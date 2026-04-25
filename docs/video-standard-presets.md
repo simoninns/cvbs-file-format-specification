@@ -69,7 +69,7 @@ This file format defines the fractional sample phase to be **zero at the start o
 > - Odd fields (1, 3, 5, 7): line 623 sample 382 to line 5 sample 947 (inclusive, wrapping across the frame boundary).
 > - Even fields (2, 4, 6, 8): line 310 sample 948 to line 317 sample 947 (inclusive).
 
-**Exact field sizes** (normative when the Signal State Preset has `tbc_applied = TRUE` at the standard 4×fsc sample rate; when either condition does not hold, use `byte_offset` and `byte_count` from `field_record` instead):
+**Exact field sizes** (normative when the Signal State Preset has `tbc_applied = TRUE` at the standard 4×fsc sample rate; when either condition does not hold, these tables are not normative):
 
 | Field type        | Lines | Total samples | Total bytes |
 | ----------------- | ----- | ------------- | ----------- |
@@ -136,7 +136,7 @@ The PAL colour sequence cycles over **8 fields**, numbered 1–8. Odd fields (1,
 > - Fields I and III: line 525 sample 768 to line 9 sample 767 (inclusive, wrapping across the frame boundary).
 > - Fields II and IV: line 263 sample 313 to line 272 sample 767 (inclusive).
 
-**Exact field sizes** (normative when the Signal State Preset has `tbc_applied = TRUE` at the standard 4×fsc sample rate; when either condition does not hold, use `byte_offset` and `byte_count` from `field_record` instead):
+**Exact field sizes** (normative when the Signal State Preset has `tbc_applied = TRUE` at the standard 4×fsc sample rate; when either condition does not hold, these tables are not normative):
 
 | Field type    | Lines | Total samples | Total bytes |
 | ------------- | ----- | ------------- | ----------- |
@@ -195,7 +195,7 @@ PAL-M uses 525-line/60 Hz timing (identical frame and line structure to NTSC) wi
 | ----------- | ------------ | --------------- | ---------------- | --------------------- |
 | 525         | 2            | 263             | 262              | 8-field               |
 
-**Exact field sizes** (normative when the Signal State Preset has `tbc_applied = TRUE` at the standard 4×fsc sample rate; when either condition does not hold, use `byte_offset` and `byte_count` from `field_record` instead):
+**Exact field sizes** (normative when the Signal State Preset has `tbc_applied = TRUE` at the standard 4×fsc sample rate; when either condition does not hold, these tables are not normative):
 
 | Field type | Lines | Total samples | Total bytes |
 | ---------- | ----- | ------------- | ----------- |
@@ -226,10 +226,11 @@ Fields are stored sequentially in file order, but their position within a colour
 
 ---
 
-## Non-Standard Extensions
+## Non-Standard Value Signaling
 
-- **LaserDisc PAL Pilot Bursts:** Allowed to exceed standard blanking levels. When `preset = 'PAL'` and `has_ld_nonstandard_bursts = TRUE` in the metadata, the file contains PAL pilot bursts as defined by IEC 60856-1986; consumers must not treat blanking-region samples outside the standard protected range as errors.
-- **LaserDisc NTSC Additional Bursts:** When `preset = 'NTSC'` and `has_ld_nonstandard_bursts = TRUE`, the file contains additional colour bursts as defined by IEC 60857-1986; the same tolerance applies.
+- **Declared non-standard values:** When `has_nonstandard_values = TRUE` in core metadata, consumers must allow non-standard sample values without treating them as automatic compliance errors.
+- **Source-specific interpretation:** The metadata flag indicates presence only. The exact type, location, and semantics of non-standard content (for example PAL pilot bursts, NTSC additional bursts, or other anomalies) are source-specific and may be documented in `capture_notes` or a producer extension format.
+- **Encoding interaction:** Depending on the declared Sample Encoding Preset and processing path, non-standard values may be preserved directly, quantized, or clipped before storage.
 - **DC Offset:** Not required. The signed 16-bit storage format provides sufficient negative headroom below 0 to accommodate chroma excursions without clipping.
 
 

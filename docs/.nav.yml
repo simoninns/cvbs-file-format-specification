@@ -3,3 +3,4 @@ nav:
   - Video Standard Presets: video-standard-presets.md
   - Sample Encoding Presets: sample-encoding-presets.md
   - Signal State Presets: signal-state-presets.md
+  - Dropout Extension Format: extensions/dropout-extension-format.md

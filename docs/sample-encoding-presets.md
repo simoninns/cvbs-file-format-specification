@@ -1,6 +1,6 @@
 # Sample Encoding Preset Definitions
 
-This document is part of the [CVBS File Format Specification](index.md). It contains the normative Sample Encoding Preset definitions referenced in Section 6 of that specification.
+This document is part of the [CVBS File Format Specification](index.md). It contains the normative Sample Encoding Preset definitions referenced in the [Sample Encoding Presets](index.md#sample-encoding-presets) section of that specification.
 
 **Naming convention:** Sample Encoding Preset names use only uppercase ASCII letters, digits, and underscores. Names derived from a broadcast standard use the format `CVBS_<ENCODING>`; names for raw hardware captures use the format `RAW_<FORMAT>_<RATE>`.
 
@@ -17,7 +17,7 @@ This document is part of the [CVBS File Format Specification](index.md). It cont
 
 This encoding is known as the **cvbs-encode** encoding.
 
-**Amplitude mapping:** The sync tip, blanking, black, white, and peak 10-bit sample values are defined by the Video Standard Preset (see Section 4.2 of the main specification). The sample level tables in [video-standard-presets](video-standard-presets.md) are the normative reference values for this encoding.
+**Amplitude mapping:** The sync tip, blanking, black, white, and peak 10-bit sample values are defined by the declared Video Standard Preset. The sample level tables in [video-standard-presets](video-standard-presets.md) are the normative reference values for this encoding.
 
 **Protected values:** The bottom of the 10-bit range (values 0–3) and the top (values 1020–1023) are reserved (must never appear in conformant output). These exclusions are defined per Video Standard Preset.
 
@@ -33,7 +33,7 @@ This encoding is known as the **cvbs-encode** encoding.
 
 **Amplitude mapping:** No standardised mapping between stored values and analogue voltage levels is defined at the preset level. The relationship between the integer range and the analogue signal levels (sync, blanking, black, white) depends on the hardware gain and DC offset settings at the time of capture. Consumers must derive or externally supply this calibration information.
 
-**Signal level compliance:** Signal level compliance (Section 3.1) is not meaningful for this preset. Signal levels bear no fixed relationship to the reference values defined by the Video Standard Preset.
+**Signal level compliance:** Signal level compliance is not meaningful for this preset. Signal levels bear no fixed relationship to the reference values defined by the Video Standard Preset.
 
 ---
 
@@ -72,6 +72,6 @@ $$
 - **Unsigned container:** Values are unsigned; the 16-bit range is 0–65535. Negative headroom (e.g. for sub-sync-tip excursions) is not representable in this format.
 - **Maximum encoded value:** The highest legal 10-bit value (1023) is stored as 65472 (= 1023 × 64).
 
-**Amplitude mapping:** The sync tip, blanking, black, white, and peak 10-bit sample values are defined by the Video Standard Preset (see Section 4.2 of the main specification). The sample level tables in [video-standard-presets](video-standard-presets.md) are the normative reference values, interpreted in the 10-bit domain before applying the MSB-alignment scaling described above.
+**Amplitude mapping:** The sync tip, blanking, black, white, and peak 10-bit sample values are defined by the declared Video Standard Preset. The sample level tables in [video-standard-presets](video-standard-presets.md) are the normative reference values, interpreted in the 10-bit domain before applying the MSB-alignment scaling described above.
 
-**Signal level compliance:** Signal level compliance (Section 3.1) applies to this preset. The protected exclusion ranges at the bottom (values 0–3) and top (values 1020–1023) of the 10-bit domain remain reserved, corresponding to stored uint16 values 0–192 and 65280–65472 respectively.
+**Signal level compliance:** Signal level compliance applies to this preset. The protected exclusion ranges at the bottom (values 0–3) and top (values 1020–1023) of the 10-bit domain remain reserved, corresponding to stored uint16 values 0–192 and 65280–65472 respectively.

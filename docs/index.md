@@ -12,7 +12,7 @@ The format is organised around three independent **preset systems**, each of whi
 - [**Sample Encoding Presets**](#sample-encoding-presets): define the bit depth, word format, and amplitude mapping used when the sample data was recorded.
 - [**Signal State Presets**](#signal-state-presets): define the processing state of the signal at the time of storage — whether a standard 4×fsc sample rate was used, whether time-base correction (TBC) was applied, and whether the decoder was phase-locked to the colour burst.
 
-Every CVBS file is described by one preset from each system. Together they fully specify how to locate field boundaries, interpret sample amplitudes, and determine the reliability of phase and level measurements.
+Every CVBS file is described by one preset from each system. Together they specify how to interpret sample amplitudes, when normative field sizing rules apply, and how reliable phase and level measurements are expected to be.
 
 The format accommodates **non-standard cases** (e.g., LaserDisc PAL pilot bursts and variations such as NTSC-J) through metadata flags rather than structural changes.
 
@@ -49,14 +49,19 @@ The specific sample range — sync tip, blanking, black, white, and peak levels 
 
 ### File Layout
 
-Video data is stored field-by-field with no additional framing or headers:
+Video data is stored as a sequence of **frames**, where each frame contains two sequential fields. A **frame** in this context is the smallest navigatable unit in the file and consists of a pair of field samples; this should not be confused with the visual rendering of interlaced video (a single interlaced video frame displayed to the user). No additional framing or headers are included:
 
 ```
-[Field 1 Video Data: N bytes]
-[Field 2 Video Data: N bytes]
+[Frame 1 Video Data: 2 × Field Data = M bytes]
+[Frame 2 Video Data: 2 × Field Data = M bytes]
 ...
 ```
 
+### Frame Ordering and Sequencing
+
+Frames are stored sequentially in the file with no embedded markers identifying the colour field sequence position or validating correct sequential ordering. In this specification, ordering has two independent dimensions: (1) ordering of frames relative to other frames, and (2) ordering of the two fields inside each frame. **No guarantee exists that either dimension is correct.** A frame may contain the expected pair of fields but with intra-frame field order reversed. Due to the nature of RF capture and physical media characteristics — including disc jumps, scratches, media pauses, physical defects, and frame dropouts — the producer may have no reliable way to verify that captured frame and field ordering maintain proper sequential continuity.
+
+If frame-level reordering, field-level analysis, phase verification, or dropout detection is required, those concerns are the responsibility of the consumer application. The file format itself operates at the frame level as the smallest unit of storage and navigation; field-level manipulation and validation are outside the scope of the format specification.
 ---
 
 ## Video Standard Presets
@@ -71,41 +76,41 @@ The `preset` field in the `cvbs_file` metadata table (see the [`cvbs_file` table
 
 Full definitions — including naming convention, sampling rates, sample level tables, horizontal and vertical structure, and normative field sizes — are in [video-standard-presets](video-standard-presets.md).
 
-### Non-Standard Extensions
+### Non-Standard Value Signaling
 
-Certain source materials (e.g., LaserDisc) carry signals in the blanking interval that fall outside the standard protected sample range. See [video-standard-presets](video-standard-presets.md#non-standard-extensions) for details.
+Certain captures may contain sample values that fall outside the nominal standard-protected ranges. See [video-standard-presets](video-standard-presets.md#non-standard-value-signaling) for details.
 
 ### Field Ordering and Phase Verification
 
-Fields are stored sequentially in the file with no embedded markers identifying where in the colour field sequence the file begins (see [File Layout](#file-layout)). **No assumption must be made that the first field in a file is field 1 (or field I) of the colour sequence.** Capture sources (e.g., LaserDisc RF captures) may begin recording at any point in the colour field cycle, and the sequence may contain discontinuities caused by source media capture issues such as disc jumps, skipped fields, or dropouts.
+Because frames consist of sequential field pairs and frame ordering is not guaranteed, consumers performing field-level analysis must validate field sequence position, field order, and phase continuity against the declared preset. They may optionally reorder fields and/or frames to establish continuity.
 
-Consumers must verify field ordering independently by examining the colour burst phase of each field and checking that consecutive fields exhibit the expected phase progression for the declared preset.
+**Note:** The choice to perform these validations and reorderings is entirely optional and application-dependent. The file format itself makes no assertions about frame ordering correctness.
 
-Preset-specific phase progression rules and the `ld-decode`/`vhs-decode` field ordering convention are in [video-standard-presets](video-standard-presets.md#field-ordering-and-phase-verification).
+Preset-specific progression rules and `ld-decode`/`vhs-decode` field-ordering conventions are defined in [video-standard-presets](video-standard-presets.md#field-ordering-and-phase-verification).
 
 ---
 
 ## Metadata Schema
 
-The metadata file is **optional**. A CVBS file is self-contained as raw sample data and can be processed without a metadata file provided the consumer obtains the necessary parameters (such as video standard, field count, and colour sequence position) by other means — for example, from user-supplied command-line arguments or application settings.
+The metadata file is **optional**. A CVBS file is self-contained as raw sample data and can be processed without a metadata file provided the consumer obtains the necessary parameters (such as video standard, frame count, and colour sequence position) by other means — for example, from user-supplied command-line arguments or application settings.
 
 When present, metadata is stored in a **separate `.meta` file** alongside the video data files.
 
 - **Metadata:** `<basename>.meta`
 
-The metadata file is a **SQLite database** containing the tables defined below.
+The metadata file is a **SQLite database** containing the core metadata table defined below.
 
 ### SQLite Metadata Schema
 
 ```sql
-PRAGMA user_version = 4;
+PRAGMA user_version = 6;
 
 CREATE TABLE cvbs_file (
     cvbs_file_id                INTEGER PRIMARY KEY,
     preset                      TEXT    NOT NULL
         CHECK (preset IN ('NTSC', 'PAL', 'PAL_M')),
     sample_encoding_preset      TEXT    NOT NULL
-        CHECK (sample_encoding_preset IN ('CVBS_10BIT', 'RAW_S16_28MSPS', 'RAW_S16_40MSPS')),
+        CHECK (sample_encoding_preset IN ('CVBS_10BIT', 'RAW_S16_28MSPS', 'RAW_S16_40MSPS', 'SWTPG21_10BIT')),
     signal_state_preset         TEXT    NOT NULL
         CHECK (signal_state_preset IN (
             'STANDARD_TBC_LOCKED',
@@ -120,37 +125,11 @@ CREATE TABLE cvbs_file (
     decoder                     TEXT    NOT NULL,
     git_branch                  TEXT,
     git_commit                  TEXT,
-    number_of_sequential_fields INTEGER
-        CHECK (number_of_sequential_fields IS NULL OR number_of_sequential_fields >= 1),
+    number_of_sequential_frames INTEGER
+        CHECK (number_of_sequential_frames IS NULL OR number_of_sequential_frames >= 1),
     black_level                 INTEGER,
-    has_ld_nonstandard_bursts   BOOLEAN,
+    has_nonstandard_values      BOOLEAN,
     capture_notes               TEXT
-);
-
-CREATE TABLE field_record (
-    cvbs_file_id    INTEGER NOT NULL,
-    field_id        INTEGER NOT NULL,
-    sync_conf       INTEGER NOT NULL,
-    byte_offset     INTEGER,
-    byte_count      INTEGER,
-    PRIMARY KEY (cvbs_file_id, field_id),
-    FOREIGN KEY (cvbs_file_id)
-        REFERENCES cvbs_file(cvbs_file_id)
-        ON DELETE CASCADE
-);
-
-CREATE TABLE sample_flags (
-    cvbs_file_id    INTEGER NOT NULL,
-    field_id        INTEGER NOT NULL,
-    field_line      INTEGER NOT NULL,
-    type            TEXT    NOT NULL
-        CHECK (type IN ('dropout')),
-    startx          INTEGER NOT NULL,
-    endx            INTEGER NOT NULL,
-    PRIMARY KEY (cvbs_file_id, field_id, field_line, startx, endx),
-    FOREIGN KEY (cvbs_file_id, field_id)
-        REFERENCES field_record(cvbs_file_id, field_id)
-        ON DELETE CASCADE
 );
 ```
 
@@ -211,12 +190,12 @@ The `cvbs_file` table records file-level metadata. There is one row per CVBS fil
 - **Nullable:** Yes
 - **Description:** The Git commit hash of the decoder tool at the time of capture. `NULL` if not recorded. Enables exact reproduction of the decoding conditions.
 
-#### `number_of_sequential_fields`
+#### `number_of_sequential_frames`
 
 - **Type:** INTEGER
 - **Nullable:** Yes
 - **Range:** ≥ 1, or `NULL`
-- **Description:** The total number of fields stored in the accompanying CVBS data file(s), counted sequentially from the first to the last. This count includes all fields regardless of colour sequence position. `NULL` if the field count is not known at the time of writing — for example, when the file is produced by a raw sampling device that does not segment or count fields during capture. Consumers encountering a `NULL` value must determine the field count by parsing the file directly.
+- **Description:** The total number of frames stored in the accompanying CVBS data file(s), counted sequentially from the first to the last. `NULL` if the frame count is not known at the time of writing — for example, when the file is produced by a raw sampling device that does not segment or count frames during capture. Consumers encountering a `NULL` value must determine the frame count by parsing the file directly.
 
 #### `black_level`
 
@@ -225,11 +204,11 @@ The `cvbs_file` table records file-level metadata. There is one row per CVBS fil
 - **Range:** `NULL`, or an INTEGER value interpreted according to the declared presets
 - **Description:** Optional override for non-standard black levels. `NULL` means no explicit override is provided and consumers should use the default black level behavior defined by the declared Video Standard Preset and Sample Encoding Preset (see [video-standard-presets](video-standard-presets.md) and [sample-encoding-presets](sample-encoding-presets.md)). A non-`NULL` value provides an explicit black-level override in the integer domain of the declared Sample Encoding Preset. For Sample Encoding Presets where black-level calibration is not defined or not meaningful (for example raw capture presets), this field should be `NULL`.
 
-#### `has_ld_nonstandard_bursts`
+#### `has_nonstandard_values`
 
 - **Type:** BOOLEAN
 - **Nullable:** Yes
-- **Description:** Indicates the presence of LaserDisc-specific non-standard burst signals in the blanking interval. The meaning is preset-specific; see [video-standard-presets](video-standard-presets.md#non-standard-extensions) for details. `NULL` means not applicable or not known.
+- **Description:** Indicates that the producer observed or intentionally generated non-standard sample values relative to the declared Video Standard Preset and Sample Encoding Preset expectations (for example values outside the nominal legal 10-bit domain, including blanking-interval anomalies such as additional bursts). This flag declares presence only; it does not encode the exact signal type or location. Some sample encodings may preserve such values directly while others may clip or quantize them. `NULL` means not applicable or not known.
 
 #### `capture_notes`
 
@@ -237,87 +216,15 @@ The `cvbs_file` table records file-level metadata. There is one row per CVBS fil
 - **Nullable:** Yes
 - **Description:** Free-form human-readable notes about the capture. May include source material description, known non-compliance (e.g., LaserDisc PAL pilot bursts), equipment details, or other contextual information. `NULL` if no notes are recorded.
 
-### `field_record` Table
+### Producer Extension Metadata
 
-The `field_record` table records per-field metadata. There is one row per field stored in the CVBS data file.
+Per-frame, per-field, and per-sample annotations (for example: frame-level dropout flags, dropout maps, confidence scores, or producer-specific segmentation data) are intentionally **not part of the core CVBS metadata schema**.
 
-#### `cvbs_file_id`
+When a producer needs to store such additional information, it must be written in a **separate, explicitly defined extension format** (for example a sidecar file or extension database with its own schema/versioning document).
 
-- **Type:** INTEGER, FOREIGN KEY → `cvbs_file.cvbs_file_id`
-- **Nullable:** No
-- **Description:** References the parent `cvbs_file` record.
+The core standard in this document defines only the `cvbs_file` metadata table. Consumers must not assume that any producer-specific extension metadata exists unless that extension format is explicitly declared and available.
 
-#### `field_id`
-
-- **Type:** INTEGER
-- **Nullable:** No
-- **Range:** 0 to `number_of_sequential_fields − 1`
-- **Description:** Zero-based sequential index of this field within the CVBS data file. Field 0 is the first stored field.
-
-#### `sync_conf`
-
-- **Type:** INTEGER
-- **Nullable:** No
-- **Range:** 0–100
-- **Description:** Sync confidence for this field, expressed as a percentage (0 = no usable sync detected; 100 = perfect sync). Values below a decoder-defined threshold indicate unreliable sync and should be treated with caution by consumers.
-
-#### `byte_offset`
-
-- **Type:** INTEGER
-- **Nullable:** Yes
-- **Description:** Absolute byte offset of the start of this field's sample data within the CVBS data file. `NULL` when the Signal State Preset has `tbc_applied = TRUE` at the standard 4×fsc sample rate, as field boundaries can be derived from the normative size table and `field_id`. Should be populated when `tbc_applied = FALSE` or the sample rate is non-standard and the field boundaries are known. When both `byte_offset` and `byte_count` are `NULL` for a non-TBC'd file, the consumer must treat the file as an unsegmented stream.
-
-#### `byte_count`
-
-- **Type:** INTEGER
-- **Nullable:** Yes
-- **Description:** Byte length of this field's sample data in the CVBS data file. `NULL` under the same conditions as `byte_offset`. Must be non-null if and only if `byte_offset` is non-null.
-
-### `sample_flags` Table
-
-The `sample_flags` table records sample-level anomaly flags within individual fields. Each row identifies a contiguous horizontal run of flagged samples on a specific line of a specific field.
-
-**Note:** `sample_flags` entries are only valid when the Signal State Preset has `tbc_applied = TRUE`. Without time-base correction, line lengths vary between fields and the field-line-relative sample index (`startx` / `endx`) is ambiguous as a physical position in the signal. When `tbc_applied = FALSE`, this table should be left empty.
-
-#### `cvbs_file_id`
-
-- **Type:** INTEGER, FOREIGN KEY → `cvbs_file.cvbs_file_id`
-- **Nullable:** No
-- **Description:** References the parent `cvbs_file` record.
-
-#### `field_id`
-
-- **Type:** INTEGER, FOREIGN KEY → `field_record.field_id`
-- **Nullable:** No
-- **Description:** References the field within which the flagged samples appear.
-
-#### `field_line`
-
-- **Type:** INTEGER
-- **Nullable:** No
-- **Range:** 0 to (lines per field − 1)
-- **Description:** Zero-based line index within the field on which the flagged samples occur.
-
-#### `type`
-
-- **Type:** TEXT
-- **Nullable:** No
-- **Range:** `'dropout'`
-- **Description:** The class of anomaly affecting the flagged samples. Currently only `'dropout'` is defined, indicating a region where the source signal was lost or corrupted (e.g., due to tape damage or disc defect).
-
-#### `startx`
-
-- **Type:** INTEGER
-- **Nullable:** No
-- **Range:** 0 to (samples per line − 1)
-- **Description:** Zero-based sample index of the first flagged sample in the run. Sample 0 is the first sample of the CVBS field line.
-
-#### `endx`
-
-- **Type:** INTEGER
-- **Nullable:** No
-- **Range:** `startx` to (samples per line − 1)
-- **Description:** Zero-based sample index of the last flagged sample in the run (inclusive). The flagged run covers samples `startx` through `endx` inclusive.
+A standard frame-based dropout extension is defined in [dropout-extension-format](extensions/dropout-extension-format.md).
 
 ---
 
@@ -331,7 +238,7 @@ Full definitions: [sample-encoding-presets](sample-encoding-presets.md)
 
 ## Signal State Presets
 
-A **Signal State Preset** defines the processing state of the signal at the time of storage along three independent axes: sample rate (standard 4×fsc vs. non-standard), TBC applied (yes vs. no), and burst locked (yes vs. no). The combination governs whether normative field sizes apply, whether signal level compliance is required, whether dropout coordinates are meaningful, and whether phase continuity can be assumed. The preset name is stored in the `signal_state_preset` field of the `cvbs_file` metadata table (see the [`cvbs_file` table](#cvbs_file-table)).
+A **Signal State Preset** defines the processing state of the signal at the time of storage along three independent axes: sample rate (standard 4×fsc vs. non-standard), TBC applied (yes vs. no), and burst locked (yes vs. no). The combination governs whether normative field sizes apply, whether signal level compliance is required, and whether phase continuity can be assumed. The preset name is stored in the `signal_state_preset` field of the `cvbs_file` metadata table (see the [`cvbs_file` table](#cvbs_file-table)).
 
 Full definitions: [signal-state-presets](signal-state-presets.md)
 
@@ -353,7 +260,7 @@ No compression, no extended `fmt ` chunks, and no non-standard RIFF variants are
 
 **File naming:** `<basename>_audio_<track_number>.wav`
 
-Track number is zero-padded to two digits: `00`, `01`, `02`, …, `16`.
+Track number is zero-padded to two digits: `00`, `01`, `02`, …, `15`.
 
 ---
 
