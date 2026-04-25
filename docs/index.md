@@ -62,6 +62,7 @@ Video data is stored as a sequence of **frames**, where each frame contains two 
 Frames are stored sequentially in the file with no embedded markers identifying the colour field sequence position or validating correct sequential ordering. In this specification, ordering has two independent dimensions: (1) ordering of frames relative to other frames, and (2) ordering of the two fields inside each frame. **No guarantee exists that either dimension is correct.** A frame may contain the expected pair of fields but with intra-frame field order reversed. Due to the nature of RF capture and physical media characteristics — including disc jumps, scratches, media pauses, physical defects, and frame dropouts — the producer may have no reliable way to verify that captured frame and field ordering maintain proper sequential continuity.
 
 If frame-level reordering, field-level analysis, phase verification, or dropout detection is required, those concerns are the responsibility of the consumer application. The file format itself operates at the frame level as the smallest unit of storage and navigation; field-level manipulation and validation are outside the scope of the format specification.
+
 ---
 
 ## Video Standard Presets
