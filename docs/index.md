@@ -87,7 +87,7 @@ Because frames consist of sequential field pairs and frame ordering is not guara
 
 **Note:** The choice to perform these validations and reorderings is entirely optional and application-dependent. The file format itself makes no assertions about frame ordering correctness.
 
-Preset-specific progression rules and `ld-decode`/`vhs-decode` field-ordering conventions are defined in [video-standard-presets](video-standard-presets.md#field-ordering-and-phase-verification).
+Preset-specific progression rules and `ld-decode`/`vhs-decode` field-ordering conventions are defined in [video-standard-presets](video-standard-presets.md#frame-ordering-and-phase-verification).
 
 ---
 

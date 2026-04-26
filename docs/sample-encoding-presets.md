@@ -57,11 +57,13 @@ This encoding is known as the **cvbs-encode** encoding.
 
 **Applicable sources:** Snell & Wilcox TPG21 test pattern generator and compatible equipment producing 10-bit CVBS output files.
 **Word format:** Each sample is stored as a **signed 16-bit little-endian integer**. The 10-bit sample value (0–1023) is encoded using a fixed device offset of 508 and a scale factor of 64:
+
 $$
 \text{int16} = (\text{value}_{10\text{-bit}} - 508) \times 64
 $$
 
 The six least-significant bits of every stored word are always zero; this is a structural consequence of the ×64 scaling, not bit-field padding. To recover the original 10-bit sample value:
+
 $$
 \text{value}_{10\text{-bit}} = \frac{\text{int16}}{64} + 508
 $$
