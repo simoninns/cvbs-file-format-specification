@@ -47,6 +47,8 @@ This specification supports two CVBS (Colour, Video, Blank, and Sync) storage re
 
 The specific sample range — sync tip, blanking, black, white, and peak levels together with any reserved protected values — is defined by the declared [Sample Encoding Preset](#sample-encoding-presets).
 
+For YC (`signal_type='yc'`) files using a Sample Encoding Preset with predefined 10-bit level mapping (for example `CVBS_10BIT` and `SWTPG21_10BIT`), luma (`.y`) follows the same level definitions as composite output, while chroma (`.c`) is represented in a centred 10-bit domain with chroma zero at sample value 512. Any preset-defined integer-domain translation applied to luma must also be applied identically to chroma in that preset's domain.
+
 ### File Layout
 
 Video data is stored as a sequence of **frames**, where each frame contains two sequential fields. A **frame** in this context is the smallest navigatable unit in the file and consists of a pair of field samples; this should not be confused with the visual rendering of interlaced video (a single interlaced video frame displayed to the user). No additional framing or headers are included:

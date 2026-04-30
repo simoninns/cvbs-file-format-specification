@@ -19,6 +19,13 @@ This encoding is known as the **cvbs-encode** encoding.
 
 **Amplitude mapping:** The sync tip, blanking, black, white, and peak 10-bit sample values are defined by the declared Video Standard Preset. The sample level tables in [video-standard-presets](video-standard-presets.md) are the normative reference values for this encoding.
 
+For dual-file YC output (`.y` and `.c`) under `CVBS_10BIT`, mapping is representation-specific:
+
+- **Luma (`.y`):** Uses the same 10-bit level definitions as composite output (sync tip, blanking, black, white, and peak), with the same legal/range constraints.
+- **Chroma (`.c`):** Uses a centred 10-bit representation where chroma zero is at 512 (in the 0-1023 domain). Chroma excursion is represented as oscillation around this centre point.
+
+Any integer-domain translation applied by the producer to `CVBS_10BIT` sample values for luma must be applied identically to chroma before storage, preserving the same encoded-domain relationship between Y and C.
+
 **Protected values:** The bottom of the 10-bit range (values 0–3) and the top (values 1020–1023) are reserved (must never appear in conformant output). These exclusions are defined per Video Standard Preset.
 
 ---
@@ -73,5 +80,12 @@ $$
 - **Device constant:** The offset 508 is a hardware constant of the Snell & Wilcox TPG21; it is not derived from any video standard and applies identically to PAL and NTSC files.
 
 **Amplitude mapping:** The sync tip, blanking, black, white, and peak 10-bit sample values are defined by the Video Standard Preset (see Section 4.2 of the main specification). The sample level tables in [video-standard-presets](video-standard-presets.md) are the normative reference values, interpreted in the 10-bit domain before applying the signed encoding described above.
+
+For dual-file YC output (`.y` and `.c`) under `SWTPG21_10BIT`, interpretation is performed in the 10-bit domain before applying the fixed offset/scale encoding:
+
+- **Luma (`.y`):** Uses the same 10-bit level definitions as composite output.
+- **Chroma (`.c`):** Uses a centred 10-bit representation where chroma zero is at 512, with excursion around that centre.
+
+Any translation or offset behavior applied to luma in this preset's 10-bit interpretation domain must be applied identically to chroma before converting to stored int16 words.
 
 **Signal level compliance:** Signal level compliance (Section 3.1) applies to this preset. The protected exclusion ranges at the bottom (values 0–3) and top (values 1020–1023) of the 10-bit domain remain reserved. Values 1020–1023 cannot be represented: they would exceed the int16 maximum of 32767 with this encoding. A compliant encoder must clamp to [4, 1019] before encoding.
