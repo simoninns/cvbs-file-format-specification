@@ -6,7 +6,7 @@ This document is part of the [CVBS File Format Specification](index.md). It cont
 
 ---
 
-## Preset: `CVBS_10BIT`
+## Preset: `CVBS_U10_4FSC`
 
 **Applicable sources:** Standards-compliant output of `ld-decode`, `vhs-decode`, `cvbs-encode`, and similar tools targeting EBU 3280 or SMPTE ST.0244.
 
@@ -19,18 +19,39 @@ This encoding is known as the **cvbs-encode** encoding.
 
 **Amplitude mapping:** The sync tip, blanking, black, white, and peak 10-bit sample values are defined by the declared Video Standard Preset. The sample level tables in [video-standard-presets](video-standard-presets.md) are the normative reference values for this encoding.
 
-For dual-file YC output (`.y` and `.c`) under `CVBS_10BIT`, mapping is representation-specific:
+For dual-file YC output (`.y` and `.c`) under `CVBS_U10_4FSC`, mapping is representation-specific:
 
 - **Luma (`.y`):** Uses the same 10-bit level definitions as composite output (sync tip, blanking, black, white, and peak), with the same legal/range constraints.
 - **Chroma (`.c`):** Uses a centred 10-bit representation where chroma zero is at 512 (in the 0-1023 domain). Chroma excursion is represented as oscillation around this centre point.
 
-Any integer-domain translation applied by the producer to `CVBS_10BIT` sample values for luma must be applied identically to chroma before storage, preserving the same encoded-domain relationship between Y and C.
+Any integer-domain translation applied by the producer to `CVBS_U10_4FSC` sample values for luma must be applied identically to chroma before storage, preserving the same encoded-domain relationship between Y and C.
 
 **Protected values:** The bottom of the 10-bit range (values 0–3) and the top (values 1020–1023) are reserved (must never appear in conformant output). These exclusions are defined per Video Standard Preset.
 
 ---
 
-## Preset: `RAW_S16_28MSPS`
+## Preset: `CVBS_U16_4FSC`
+
+**Applicable sources:** Standards-compliant output of `ld-decode`, `vhs-decode`, `cvbs-encode`, and similar tools targeting EBU 3280 or SMPTE ST.0244, represented as zero-padded 16-bit words.
+
+**Word format:** Each sample is stored as an **unsigned 16-bit little-endian integer**. The underlying 10-bit value is the same domain as `CVBS_U10_4FSC` (0-1023), encoded by shifting left 6 bits (multiplying by 64): `u16 = value_10bit * 64`.
+
+The six least-significant bits of every stored sample word are always zero. To recover the original 10-bit value, divide by 64 (`value_10bit = u16 / 64`).
+
+**Amplitude mapping:** The sync tip, blanking, black, white, and peak values are exactly those of `CVBS_U10_4FSC`, scaled by ×64 in storage. Equivalently, interpret stored samples by dividing by 64 to return to the normative 10-bit domain, then apply the Video Standard Preset level tables in [video-standard-presets](video-standard-presets.md).
+
+For dual-file YC output (`.y` and `.c`) under `CVBS_U16_4FSC`, mapping is representation-specific in the same way as `CVBS_U10_4FSC`, then scaled by ×64 for storage:
+
+- **Luma (`.y`):** Uses the same 10-bit level definitions as composite output, then stores each sample as value ×64.
+- **Chroma (`.c`):** Uses a centred 10-bit representation where chroma zero is at 512, then stores each sample as value ×64 (chroma zero at 32768 in the unsigned 16-bit domain).
+
+Any integer-domain translation applied by the producer to `CVBS_U16_4FSC` sample values for luma must be applied identically to chroma before storage, preserving the same encoded-domain relationship between Y and C.
+
+**Protected values:** The same protected 10-bit values as `CVBS_U10_4FSC` apply (0-3 and 1020-1023), represented in storage as 0-192 and 65280-65472 respectively in the scaled domain.
+
+---
+
+## Preset: `RAW_S16_28M`
 
 **Applicable sources:** CX Cards and similar hardware capturers operating at approximately 28.6 MHz.
 
@@ -44,7 +65,7 @@ Any integer-domain translation applied by the producer to `CVBS_10BIT` sample va
 
 ---
 
-## Preset: `RAW_S16_40MSPS`
+## Preset: `RAW_S16_40M`
 
 **Applicable sources:** DomesdayDuplicator and similar hardware capturers configured for a 40 MHz capture rate.
 
@@ -60,7 +81,7 @@ Any integer-domain translation applied by the producer to `CVBS_10BIT` sample va
 
 ---
 
-## Preset: `SWTPG21_10BIT`
+## Preset: `CVBS_TPG21_4FSC`
 
 **Applicable sources:** Snell & Wilcox TPG21 test pattern generator and compatible equipment producing 10-bit CVBS output files.
 **Word format:** Each sample is stored as a **signed 16-bit little-endian integer**. The 10-bit sample value (0–1023) is encoded using a fixed device offset of 508 and a scale factor of 64:
@@ -81,7 +102,7 @@ $$
 
 **Amplitude mapping:** The sync tip, blanking, black, white, and peak 10-bit sample values are defined by the Video Standard Preset (see Section 4.2 of the main specification). The sample level tables in [video-standard-presets](video-standard-presets.md) are the normative reference values, interpreted in the 10-bit domain before applying the signed encoding described above.
 
-For dual-file YC output (`.y` and `.c`) under `SWTPG21_10BIT`, interpretation is performed in the 10-bit domain before applying the fixed offset/scale encoding:
+For dual-file YC output (`.y` and `.c`) under `CVBS_TPG21_4FSC`, interpretation is performed in the 10-bit domain before applying the fixed offset/scale encoding:
 
 - **Luma (`.y`):** Uses the same 10-bit level definitions as composite output.
 - **Chroma (`.c`):** Uses a centred 10-bit representation where chroma zero is at 512, with excursion around that centre.

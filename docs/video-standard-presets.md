@@ -23,7 +23,7 @@ Examples:
 |---------|-----------|
 | 4 × 625 × 25 × (1135/4 + 1/625) | **17,734,475 Hz** (exact) |
 
-**Sample level table (EBU 3280) — applicable when Sample Encoding Preset is `CVBS_10BIT`:**
+**Sample level table (EBU 3280) — applicable when Sample Encoding Preset is `CVBS_U10_4FSC` or `CVBS_U16_4FSC`:**
 
 | Level            | 10-bit Decimal | 10-bit Hex   | Notes                       |
 | ---------------- | -------------- | ------------ | --------------------------- |
@@ -102,7 +102,7 @@ The PAL colour sequence cycles over **8 fields**, numbered 1–8. Odd fields (1,
 |---------|-----------|
 | 4 × 525 × (30000/1001) × (455/2) | **14,318,181.8… Hz** |
 
-**Sample level table (SMPTE ST.0244) — applicable when Sample Encoding Preset is `CVBS_10BIT`:**
+**Sample level table (SMPTE ST.0244) — applicable when Sample Encoding Preset is `CVBS_U10_4FSC` or `CVBS_U16_4FSC`:**
 
 | Level            | 10-bit Decimal | 10-bit Hex | Notes                           |
 | ---------------- | -------------- | ---------- | ------------------------------- |
@@ -171,7 +171,7 @@ PAL-M uses 525-line/60 Hz timing (identical frame and line structure to NTSC) wi
 |---------|-----------|
 | 4 × 525 × (30000/1001) × (909/4) | **14,302,448.1… Hz** |
 
-**Sample level table (SMPTE ST.0244 levels) — applicable when Sample Encoding Preset is `CVBS_10BIT`:**
+**Sample level table (SMPTE ST.0244 levels) — applicable when Sample Encoding Preset is `CVBS_U10_4FSC` or `CVBS_U16_4FSC`:**
 
 | Level            | 10-bit Decimal | 10-bit Hex | Notes                           |
 | ---------------- | -------------- | ---------- | ------------------------------- |

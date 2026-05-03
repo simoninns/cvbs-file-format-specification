@@ -17,7 +17,7 @@ These axes are independent. In particular, a file can be TBC'd but not burst-loc
 The preset governs several aspects of format interpretation:
 
 - **Normative field sizes** as defined by the declared Video Standard Preset in [video-standard-presets](video-standard-presets.md) apply only when `tbc_applied = TRUE` and the sample rate is the standard 4×fsc. Without TBC there is no guarantee of a fixed sample count per line, so consumers must not infer fixed per-field byte sizes from presets alone.
-- **Signal level compliance** is only meaningful when `tbc_applied = TRUE` and the Sample Encoding Preset is `CVBS_10BIT`. A raw RF capture contains signal levels that bear no relation to the preset's reference sample values.
+- **Signal level compliance** is only meaningful when `tbc_applied = TRUE` and the Sample Encoding Preset is `CVBS_U10_4FSC` or `CVBS_U16_4FSC`. A raw RF capture contains signal levels that bear no relation to the preset's reference sample values.
 - **Sample-coordinate anomaly annotations** (for example dropout coordinates) are only stable when lines have a fixed, known length, i.e., when TBC has been applied. Such annotations are extension metadata, not part of the core schema.
 - **Subcarrier phase analysis** requires knowing whether burst locking was applied so that consumers can determine whether phase continuity can be assumed between fields.
 
@@ -35,7 +35,7 @@ The preset governs several aspects of format interpretation:
 
 **Normative field sizes:** Apply as defined by the declared Video Standard Preset in [video-standard-presets](video-standard-presets.md).
 
-**Signal level compliance:** Required when Sample Encoding Preset is `CVBS_10BIT`.
+**Signal level compliance:** Required when Sample Encoding Preset is `CVBS_U10_4FSC` or `CVBS_U16_4FSC`.
 
 **Extension anomaly annotations:** Valid and meaningful if an extension format provides them.
 
@@ -53,7 +53,7 @@ The preset governs several aspects of format interpretation:
 
 **Normative field sizes:** Apply as defined by the declared Video Standard Preset in [video-standard-presets](video-standard-presets.md).
 
-**Signal level compliance:** Required when Sample Encoding Preset is `CVBS_10BIT`.
+**Signal level compliance:** Required when Sample Encoding Preset is `CVBS_U10_4FSC` or `CVBS_U16_4FSC`.
 
 **Extension anomaly annotations:** Valid and meaningful if an extension format provides them.
 
@@ -89,7 +89,7 @@ The preset governs several aspects of format interpretation:
 
 **Normative field sizes:** Do not apply at field sample counts defined for standard 4×fsc presets in [video-standard-presets](video-standard-presets.md).
 
-**Signal level compliance:** Not applicable for `CVBS_10BIT` amplitude values; consumers must use calibration data to map sample values to analogue levels.
+**Signal level compliance:** Not applicable for standard-mapped CVBS amplitude values at non-standard sample rates; consumers must use calibration data to map sample values to analogue levels.
 
 **Extension anomaly annotations:** Valid (sample coordinates are stable because TBC was applied), but coordinates reference samples at the non-standard sample rate.
 

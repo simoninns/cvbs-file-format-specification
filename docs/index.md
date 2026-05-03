@@ -38,7 +38,7 @@ The physical encoding and amplitude mapping of samples are defined by the [**Sam
 - **Amplitude mapping:** the relationship between the stored integer value and the analogue signal amplitude — specifically, where sync tip, blanking, black, white, and peak levels fall within the integer range.
 - **Headroom:** whether negative or positive values beyond the nominal 0–1023 range are meaningful.
 
-The standard encoding preset (`CVBS_10BIT`) represents the normative production output of `ld-decode`, `vhs-decode`, and similar tools. The raw capture presets represent unscaled ADC output from hardware capturers such as the DomesdayDuplicator. See [sample-encoding-presets](sample-encoding-presets.md) for the full definitions.
+The standard encoding preset (`CVBS_U10_4FSC`) represents the normative production output of `ld-decode`, `vhs-decode`, and similar tools. The `CVBS_U16_4FSC` preset represents the same 10-bit domain values stored in an unsigned 16-bit container with 6 zero-padded LSBs (`value << 6`). The raw capture presets represent unscaled ADC output from hardware capturers such as the DomesdayDuplicator. See [sample-encoding-presets](sample-encoding-presets.md) for the full definitions.
 
 This specification supports two CVBS (Colour, Video, Blank, and Sync) storage representations, which differ only in how colour information is carried:
 
@@ -47,7 +47,7 @@ This specification supports two CVBS (Colour, Video, Blank, and Sync) storage re
 
 The specific sample range — sync tip, blanking, black, white, and peak levels together with any reserved protected values — is defined by the declared [Sample Encoding Preset](#sample-encoding-presets).
 
-For YC (`signal_type='yc'`) files using a Sample Encoding Preset with predefined 10-bit level mapping (for example `CVBS_10BIT` and `SWTPG21_10BIT`), luma (`.y`) follows the same level definitions as composite output, while chroma (`.c`) is represented in a centred 10-bit domain with chroma zero at sample value 512. Any preset-defined integer-domain translation applied to luma must also be applied identically to chroma in that preset's domain.
+For YC (`signal_type='yc'`) files using a Sample Encoding Preset with predefined 10-bit level mapping (for example `CVBS_U10_4FSC`, `CVBS_U16_4FSC`, and `CVBS_TPG21_4FSC`), luma (`.y`) follows the same level definitions as composite output, while chroma (`.c`) is represented in a centred 10-bit domain with chroma zero at sample value 512. Any preset-defined integer-domain translation applied to luma must also be applied identically to chroma in that preset's domain.
 
 ### File Layout
 
@@ -106,14 +106,14 @@ The metadata file is a **SQLite database** containing the core metadata table de
 ### SQLite Metadata Schema
 
 ```sql
-PRAGMA user_version = 6;
+PRAGMA user_version = 7;
 
 CREATE TABLE cvbs_file (
     cvbs_file_id                INTEGER PRIMARY KEY,
     preset                      TEXT    NOT NULL
         CHECK (preset IN ('NTSC', 'PAL', 'PAL_M')),
     sample_encoding_preset      TEXT    NOT NULL
-        CHECK (sample_encoding_preset IN ('CVBS_10BIT', 'RAW_S16_28MSPS', 'RAW_S16_40MSPS', 'SWTPG21_10BIT')),
+        CHECK (sample_encoding_preset IN ('CVBS_U10_4FSC', 'CVBS_U16_4FSC', 'RAW_S16_28M', 'RAW_S16_40M', 'CVBS_TPG21_4FSC')),
     signal_state_preset         TEXT    NOT NULL
         CHECK (signal_state_preset IN (
             'STANDARD_TBC_LOCKED',
