@@ -16,7 +16,7 @@ These axes are independent. In particular, a file can be TBC'd but not burst-loc
 
 The preset governs several aspects of format interpretation:
 
-- **Normative field sizes** as defined by the declared Video Standard Preset in [video-standard-presets](video-standard-presets.md) apply only when `tbc_applied = TRUE` and the sample rate is the standard 4×fsc. Without TBC there is no guarantee of a fixed sample count per line, so consumers must not infer fixed per-field byte sizes from presets alone.
+- **Normative sample-count constraints** as defined by the declared Video Standard Preset in [video-standard-presets](video-standard-presets.md) apply only when `tbc_applied = TRUE` and the sample rate is the standard 4×fsc. Depending on the standard, these constraints may be defined per field, per frame, or both. Without TBC there is no guarantee of a fixed sample count per line, so consumers must not infer fixed byte sizes from presets alone.
 - **Signal level compliance** is only meaningful when `tbc_applied = TRUE` and the Sample Encoding Preset is `CVBS_U10_4FSC` or `CVBS_U16_4FSC`. A raw RF capture contains signal levels that bear no relation to the preset's reference sample values.
 - **Sample-coordinate anomaly annotations** (for example dropout coordinates) are only stable when lines have a fixed, known length, i.e., when TBC has been applied. Such annotations are extension metadata, not part of the core schema.
 - **Subcarrier phase analysis** requires knowing whether burst locking was applied so that consumers can determine whether phase continuity can be assumed between fields.
@@ -33,7 +33,7 @@ The preset governs several aspects of format interpretation:
 
 **Typical source:** `cvbs-encode` synthetic output; broadcast-grade capture; `ld-decode` / `vhs-decode` PAL `.tbc` output when Sc/H locked.
 
-**Normative field sizes:** Apply as defined by the declared Video Standard Preset in [video-standard-presets](video-standard-presets.md).
+**Normative sample-count constraints:** Apply as defined by the declared Video Standard Preset in [video-standard-presets](video-standard-presets.md).
 
 **Signal level compliance:** Required when Sample Encoding Preset is `CVBS_U10_4FSC` or `CVBS_U16_4FSC`.
 
@@ -51,7 +51,7 @@ The preset governs several aspects of format interpretation:
 
 **Typical source:** `ld-decode` / `vhs-decode` NTSC `.tbc` output — timing corrected but subcarrier phase not anchored to a canonical reference.
 
-**Normative field sizes:** Apply as defined by the declared Video Standard Preset in [video-standard-presets](video-standard-presets.md).
+**Normative sample-count constraints:** Apply as defined by the declared Video Standard Preset in [video-standard-presets](video-standard-presets.md).
 
 **Signal level compliance:** Required when Sample Encoding Preset is `CVBS_U10_4FSC` or `CVBS_U16_4FSC`.
 
@@ -69,7 +69,7 @@ The preset governs several aspects of format interpretation:
 
 **Typical source:** A signal sampled at the standard rate but without time-base correction applied — e.g., a synchronous ADC capture at the standard 4×fsc rate before any TBC processing.
 
-**Normative field sizes:** Do not apply.
+**Normative sample-count constraints:** Do not apply.
 
 **Signal level compliance:** Not required.
 
@@ -87,7 +87,7 @@ The preset governs several aspects of format interpretation:
 
 **Typical source:** Oversampled TBC output; a burst-locked TBC applied after raw oversampled capture.
 
-**Normative field sizes:** Do not apply at field sample counts defined for standard 4×fsc presets in [video-standard-presets](video-standard-presets.md).
+**Normative sample-count constraints:** Do not apply at the standard 4×fsc sample counts defined in [video-standard-presets](video-standard-presets.md).
 
 **Signal level compliance:** Not applicable for standard-mapped CVBS amplitude values at non-standard sample rates; consumers must use calibration data to map sample values to analogue levels.
 
@@ -105,7 +105,7 @@ The preset governs several aspects of format interpretation:
 
 **Typical source:** Oversampled TBC output where subcarrier phase is not stabilised.
 
-**Normative field sizes:** Do not apply.
+**Normative sample-count constraints:** Do not apply.
 
 **Signal level compliance:** Not applicable.
 
@@ -123,7 +123,7 @@ The preset governs several aspects of format interpretation:
 
 **Typical source:** DomesdayDuplicator raw RF capture; raw ADC output at any non-standard rate.
 
-**Normative field sizes:** Do not apply.
+**Normative sample-count constraints:** Do not apply.
 
 **Signal level compliance:** Not applicable.
 

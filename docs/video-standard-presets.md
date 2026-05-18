@@ -2,7 +2,7 @@
 
 This document is part of the [CVBS File Format Specification](index.md). It contains the normative Video Standard Preset definitions referenced in Section 4.2 of that specification.
 
-> **Note — Line Numbering Convention:** This specification uses **0-based field line numbering**: field line 0 is the first line of a field, and the last line of a field is numbered N−1 (where N is the total number of lines in that field). This follows software/coding convention and differs from the 1-based line numbering used in EBU and SMPTE broadcast standards, where lines are numbered starting from 1. Informational blocks that quote line numbers from EBU or SMPTE documents preserve the original 1-indexed numbering from those standards; each such block notes this explicitly. Additionally, EBU and SMPTE number lines sequentially across the entire interlaced frame; where such frame line numbers appear in informational blocks they are labelled as frame line numbers to distinguish them from the field-relative line numbers used throughout the rest of this specification.
+> **Note — Line Numbering Convention:** This specification uses **0-based frame line numbering**: frame line 0 is the first line of a frame, and the last line of a frame is numbered N−1 (where N is the total number of lines in that frame). This follows software/coding convention and differs from the 1-based line numbering used in EBU and SMPTE broadcast standards, where lines are numbered starting from 1. Informational blocks that quote line numbers from EBU or SMPTE documents preserve the original 1-indexed numbering from those standards; each such block notes this explicitly. Where the source standard numbers lines sequentially across the full frame, those values are referred to here as **frame line numbers**.
 
 **Naming convention:** Preset names follow the pattern `PRIMARY` or `PRIMARY_SUBSET`, where `PRIMARY` identifies the base standard and `SUBSET` (when present) identifies a regional or technical variant. The underscore `_` separates the primary designator from the subset. Preset names use only uppercase ASCII letters, digits, and underscores; each name defined in this specification is unique. Additional presets may be defined in future revisions or companion documents.
 
@@ -39,53 +39,49 @@ Examples:
 
 | Total samples/line       | Digital active samples | Digital blanking samples |
 | ------------------------ | ---------------------- | ------------------------ |
-| 1135 (nominal; see note) | 948                    | 187                      |
+| 1135.0064 (exact average; see note) | 948 (nominal)         | 187.0064 (nominal)       |
 
 
-**PAL — non-integer samples per line:** The precise PAL sample rate yields exactly 1135 + 4/625 samples per line on average. Per EBU tech3280, this is represented as **623 digital lines of 1135 samples and 2 digital lines of 1137 samples per frame** (total 709,379 samples per frame). The two long digital lines are frame line **313** and frame line **625** (EBU 1-indexed frame numbering), which correspond to field line **312** of the odd field and field line **311** of the even field in this specification's 0-indexed field-relative numbering.
+**PAL — non-orthogonal 4fsc sampling structure:** At the exact PAL 4fsc sampling rate there are **1135.0064 sample periods per line** and therefore exactly **709,379 samples per frame**. For frame 1 of the PAL sequence at 0 degrees Sc/H, the half-amplitude point of the leading edge of the line sync pulse on frame line 1 falls midway between samples **957** and **958**. On succeeding lines the sampling structure advances by **0.361 ns per line**, i.e. **4 samples per frame**. Consequently the PAL 4fsc sampling lattice is **non-orthogonal** and repeats at **frame rate** rather than at line rate.
 
-For PAL, the **digital active line** is always samples **0-947**. On ordinary lines, the **digital horizontal blanking interval** is samples **948-1134**, so a complete digital line is samples **948-1134, 0-947**. On frame lines 313 and 625, two additional blanking samples are inserted immediately before the first active sample; those long lines are therefore samples **948-1136, 0-947**. In EBU tech3280 numbering, the added samples are **1135** and **1136**.
+The analogue PAL composite waveform is sampled at **4fsc**, so sampling instants occur at **45 degrees, 135 degrees, 225 degrees, and 315 degrees** relative to the **+U axis**. No synthetic or "additional" samples are required in this native 4fsc representation; that concept is only needed when converting the sampled frame into an auxiliary orthogonal digital line representation.
 
-The analogue horizontal timing reference is **0H**, defined as the midpoint of the leading edge of sync. On line 1 of field 1 at 0 degrees Sc/H, 0H lies midway between samples **957** and **958**. Any mapping between analogue time and stored digital samples must track the **analogue line period from 0H to 0H**, not from the first numbered digital blanking sample, and this remains true whether the underlying digital line carries 1135 or 1137 samples.
+The analogue horizontal timing reference is **0H**, defined as the midpoint of the leading edge of sync. Any mapping between analogue time and stored digital samples must track the **analogue line period from 0H to 0H** within this non-orthogonal frame-repeating structure, not an imposed line-orthogonal numbering scheme.
 
-> *(Informational — EBU tech3280 §1.2 and Fig. 5b):* For PAL the digital active line consists of samples 0-947. A complete ordinary digital line consists of samples 948-1134 and 0-947 inclusive. Frame lines 313 and 625 are the two long lines; they additionally contain samples 1135 and 1136 immediately before sample 0. The half-amplitude point of the leading sync edge on line 1, field 1 falls midway between samples 957 and 958; on succeeding lines the sampling structure advances by 0.361 ns per line (4 samples per frame). *(Line numbers in this block use EBU tech3280's 1-indexed convention; EBU "line 1, field 1" corresponds to field line 0 of the first field in this specification.)*
+**PAL 4-frame sequence:**
 
-**Vertical structure (digital frame representation):**
+| Frame in sequence | Description |
+| ----------------- | ----------- |
+| 1                 | Reference frame of the PAL sequence at 0 degrees Sc/H |
+| 2                 | Second frame in the PAL sequence |
+| 3                 | Third frame in the PAL sequence |
+| 4                 | Fourth frame in the PAL sequence; the next frame repeats as frame 1 |
 
-| Lines/frame | Fields/frame | Lines/odd field | Lines/even field | Colour field sequence |
-| ----------- | ------------ | --------------- | ---------------- | --------------------- |
-| 625         | 2            | 313             | 312              | 8-field               |
-
-In analogue timing, each PAL field spans **312.5H**. The asymmetry in the table above reflects the **digital line allocation within a 625-line frame representation**, not different analogue field durations: the odd field occupies frame lines 1-313 and the even field occupies frame lines 314-625 in EBU's 1-indexed frame numbering.
-
-> *(Informational — EBU tech3280 §1.1.1):* PAL uses 2:1 interlace over 625 lines at 25 frames/s. The PAL subcarrier-to-horizontal (Sc/H) phase relationship cycles over 8 fields before repeating; fields are labelled 1–8. Odd fields (1, 3, 5, 7) contain 313 lines (lines 1–313 within each frame); even fields (2, 4, 6, 8) contain 312 lines (lines 314–625). *(Line numbers in this block are EBU 1-indexed frame line numbers, counting sequentially across the full 625-line frame.)*
+PAL is a **625-line, 25 frames/s** system. The Sc/H relationship repeats every **4 frames**. In this specification, PAL sequence position is described only by the repeating frame numbers **1-4**. Each stored PAL frame is the complete 625-line frame sample sequence within the non-orthogonal 4fsc sample lattice; the frame numbering identifies sequence position only and does **not** imply an orthogonal digital display or storage raster.
 
 **Digital vertical blanking interval:**
 
 > *(Informational — EBU tech3280 §1.3.2):* For PAL, the digital vertical blanking interval extends (line numbers use EBU tech3280's 1-indexed frame line convention, counting sequentially across the full 625-line frame):
-> - Odd fields (1, 3, 5, 7): line 623 sample 382 to line 5 sample 947 (inclusive, wrapping across the frame boundary).
-> - Even fields (2, 4, 6, 8): line 310 sample 948 to line 317 sample 947 (inclusive).
+> - frame line 623 sample 382 to frame line 5 sample 947 (inclusive, wrapping across the frame boundary).
+> - frame line 310 sample 948 to frame line 317 sample 947 (inclusive).
 
-**Exact field sizes** (normative when the Signal State Preset has `tbc_applied = TRUE` at the standard 4×fsc sample rate; when either condition does not hold, these tables are not normative):
+**Exact frame size** (normative when the Signal State Preset has `tbc_applied = TRUE` at the standard 4×fsc sample rate; when either condition does not hold, this value is not normative):
 
-| Field type        | Lines | Total samples | Total bytes |
-| ----------------- | ----- | ------------- | ----------- |
-| Odd (1, 3, 5, 7)  | 313   | **355,257**   | **710,514** |
-| Even (2, 4, 6, 8) | 312   | **354,122**   | **708,244** |
+| Frames/sample count | Samples | Bytes |
+| ------------------- | ------- | ----- |
+| PAL frame           | **709,379** | **1,418,758** |
 
-Derivations:
-- **PAL odd:** 312 × 1135 + 1 × 1137 = 354,120 + 1,137 = **355,257 samples**
-- **PAL even:** 311 × 1135 + 1 × 1137 = 352,985 + 1,137 = **354,122 samples**
+Because the PAL 4fsc sampling structure is non-orthogonal, this specification defines the normative PAL sample count only at the **frame** level. The exact normative constraint is the **frame total** of **709,379 samples** repeating at frame rate.
 
 Bytes = samples × 2 (each sample is one 16-bit little-endian word).
 
-**Colour field sequence:**
+**Colour frame sequence:**
 
-The PAL colour sequence cycles over **8 fields**, numbered 1–8. Odd fields (1, 3, 5, 7) are 313-line fields; even fields (2, 4, 6, 8) are 312-line fields.
+The PAL colour sequence cycles over **4 frames** and then repeats.
 
-> *(Informational — EBU tech3280 §1.1.1 and Fig. 1):* At 0° Sc/H (the normative PAL sampling phase), the +U axis of the subcarrier is at zero phase relative to the horizontal timing reference point (0H) on field line 0 of field 1. The colour burst phase rotates through a known pattern over the 8-field cycle. Any break in the expected Sc/H phase progression between consecutive stored fields indicates a discontinuity in the colour field sequence.
+> *(Informational — EBU tech3280 §1.1.1 and Fig. 1):* At 0° Sc/H (the normative PAL sampling phase), the +U axis of the subcarrier is at zero phase relative to the horizontal timing reference point (0H) at the start of frame 1 in the PAL sequence. The colour burst phase rotates through the standard PAL progression across the 4-frame cycle. Any break in the expected Sc/H phase progression between consecutive stored frames indicates a discontinuity in the PAL sequence.
 
-> *(Informational — ld-decode/vhs-decode convention):* `isFirstField = true` corresponds to EBU Field 2 (the even/lower field, 312 lines) — Field 2 leads into its VSYNC interval with a half-line (0.5H) gap, not Field 1. PAL TBC output from `ld-decode` therefore conventionally starts with the even analogue field.
+> *(Informational — ld-decode/vhs-decode convention):* PAL TBC output from `ld-decode` conventionally starts at the midpoint of frame 1 in the EBU PAL sequence rather than at its first line. Consumers that care about exact PAL sequence origin should account for that half-frame offset.
 
 ---
 
@@ -119,40 +115,41 @@ The PAL colour sequence cycles over **8 fields**, numbered 1–8. Odd fields (1,
 
 > *(Informational — SMPTE ST.0244 §4.1.1):* For NTSC, sampling is orthogonal; all lines carry exactly 910 samples. The half-amplitude point of the leading (falling) horizontal sync edge falls between samples 784 and 785. The digital active line is samples 0–767; the digital horizontal blanking interval is samples 768–909.
 
-**Vertical structure:**
+**NTSC 2-frame sequence:**
 
-| Lines/frame | Fields/frame | Lines/odd field | Lines/even field | Colour field sequence |
-| ----------- | ------------ | --------------- | ---------------- | --------------------- |
-| 525         | 2            | 263             | 262              | 4-field               |
+| Frame in sequence | Description |
+| ----------------- | ----------- |
+| A                 | First frame of the NTSC colour sequence |
+| B                 | Second frame of the NTSC colour sequence; the next frame repeats as A |
 
-> *(Informational — SMPTE ST.0244 §4.1, §4.1.2):* NTSC uses 2:1 interlace over 525 lines at 30000/1001 frames/s. The SC/H phase relationship cycles over 4 fields (colour frames A and B, fields I–IV). Fields I and III are odd fields (263 lines each); fields II and IV are even fields (262 lines each). Sample 0 of line 10, field I, colour frame A is an I-axis (+123°) sample. *(Line numbers in this block use SMPTE ST.0244's 1-indexed frame line convention, counting sequentially across the full 525-line frame; SMPTE "line 10" corresponds to field line 9 of field I in this specification's 0-indexed convention.)*
+NTSC is a **525-line, 30000/1001 frames/s** system. The SC/H relationship repeats every **2 frames**. In this specification, NTSC sequence position is described only by the alternating frame labels **A** and **B**.
+
+> *(Informational — SMPTE ST.0244 §4.1, §4.1.2):* SMPTE ST.0244 describes the same repeating NTSC sequence using a lower-level phase progression. This specification instead normalises that description to a **2-frame** cycle because storage in this format is frame-based. At 0° SC/H, sample 0 of frame line 10 in colour frame A is an I-axis (+123°) sample. *(Line numbers in this block use SMPTE ST.0244's 1-indexed frame line convention, counting sequentially across the full 525-line frame.)*
 
 **Digital vertical blanking interval:**
 
 > *(Informational — SMPTE ST.0244 §5.4.1):* For NTSC, the digital vertical blanking interval extends (line numbers use SMPTE ST.0244's 1-indexed frame line convention, counting sequentially across the full 525-line frame):
-> - Fields I and III: line 525 sample 768 to line 9 sample 767 (inclusive, wrapping across the frame boundary).
-> - Fields II and IV: line 263 sample 313 to line 272 sample 767 (inclusive).
+> - line 525 sample 768 to line 9 sample 767 (inclusive, wrapping across the frame boundary).
+> - line 263 sample 313 to line 272 sample 767 (inclusive).
 
-**Exact field sizes** (normative when the Signal State Preset has `tbc_applied = TRUE` at the standard 4×fsc sample rate; when either condition does not hold, these tables are not normative):
+**Exact frame size** (normative when the Signal State Preset has `tbc_applied = TRUE` at the standard 4×fsc sample rate; when either condition does not hold, this value is not normative):
 
-| Field type    | Lines | Total samples | Total bytes |
-| ------------- | ----- | ------------- | ----------- |
-| Odd (I, III)  | 263   | **239,330**   | **478,660** |
-| Even (II, IV) | 262   | **238,420**   | **476,840** |
+| Frames/sample count | Samples | Bytes |
+| ------------------- | ------- | ----- |
+| NTSC frame          | **477,750** | **955,500** |
 
-Derivations:
-- **NTSC odd:** 263 × 910 = **239,330 samples**
-- **NTSC even:** 262 × 910 = **238,420 samples**
+Derivation:
+- **NTSC frame:** 525 × 910 = **477,750 samples**
 
 Bytes = samples × 2 (each sample is one 16-bit little-endian word).
 
-**Colour field sequence:**
+**Colour frame sequence:**
 
-The NTSC colour sequence cycles over **4 fields** (Field I, Field II, Field III, Field IV), forming colour frames A (fields I–II) and B (fields III–IV). Fields I and III are odd fields (263 lines); fields II and IV are even fields (262 lines).
+The NTSC colour sequence cycles over **2 frames**, conventionally labelled **A** and **B**, and then repeats.
 
-> *(Informational — SMPTE ST.0244 §3.2, §4.1.2):* At 0° SC/H (the normative NTSC sampling phase), sample 0 of line 10, field I, colour frame A is an I-axis (+123°) sample (SMPTE 1-indexed frame line 10 = field line 9 of field I in this specification's 0-indexed convention). Each of the 4 fields has a unique SC/H relationship; comparing the measured burst phase at sample 0 against the expected value for that field identifies its position in the 4-field sequence. A phase discontinuity between consecutive fields indicates a colour frame sequence break.
+> *(Informational — SMPTE ST.0244 §3.2, §4.1.2):* At 0° SC/H (the normative NTSC sampling phase), sample 0 of frame line 10 in colour frame A is an I-axis (+123°) sample. Comparing the measured burst phase at that reference point against the expected value for colour frame **A** or **B** identifies position within the 2-frame sequence. A phase discontinuity between consecutive stored frames indicates a colour frame sequence break.
 
-> *(Informational — ld-decode/vhs-decode convention):* `isFirstField = true` corresponds to SMPTE Field I (the odd/upper field, 263 lines) — Field I leads into VSYNC with a full 1H gap. NTSC TBC output from `ld-decode` therefore conventionally starts with the odd analogue field.
+> *(Informational — ld-decode/vhs-decode convention):* NTSC TBC output from `ld-decode` conventionally starts with colour frame **A**.
 
 ---
 
@@ -160,7 +157,7 @@ The NTSC colour sequence cycles over **4 fields** (Field I, Field II, Field III,
 
 **External standards:** SMPTE ST.0244 (signal levels and timing structure); PAL colour subcarrier modulation (IEC/ABNT standards for Brazil).
 
-PAL-M uses 525-line/60 Hz timing (identical frame and line structure to NTSC) with PAL colour subcarrier modulation. Signal levels follow ST.0244. The colour field sequence is 8 fields (longer than NTSC's 4-field sequence) due to the PAL colour encoding.
+PAL-M uses 525-line/60 Hz timing (identical frame size and line structure to NTSC) with PAL colour subcarrier modulation. Signal levels follow ST.0244. The colour sequence repeats every **4 frames**, longer than NTSC's 2-frame colour sequence, due to the PAL colour encoding.
 
 **Sampling rate:**
 
@@ -186,51 +183,54 @@ PAL-M uses 525-line/60 Hz timing (identical frame and line structure to NTSC) wi
 | ------------------ | ---------------------- | ------------------------ |
 | 909 (exact)        | 768                    | 141                      |
 
-**Vertical structure:**
+**PAL-M 4-frame sequence:**
 
-| Lines/frame | Fields/frame | Lines/odd field | Lines/even field | Colour field sequence |
-| ----------- | ------------ | --------------- | ---------------- | --------------------- |
-| 525         | 2            | 263             | 262              | 8-field               |
+| Frame in sequence | Description |
+| ----------------- | ----------- |
+| 1                 | Reference frame of the PAL-M sequence |
+| 2                 | Second frame in the PAL-M sequence |
+| 3                 | Third frame in the PAL-M sequence |
+| 4                 | Fourth frame in the PAL-M sequence; the next frame repeats as frame 1 |
 
-**Exact field sizes** (normative when the Signal State Preset has `tbc_applied = TRUE` at the standard 4×fsc sample rate; when either condition does not hold, these tables are not normative):
+PAL-M is a **525-line, 30000/1001 frames/s** system. The SC/H relationship repeats every **4 frames**.
 
-| Field type | Lines | Total samples | Total bytes |
-| ---------- | ----- | ------------- | ----------- |
-| Odd        | 263   | **239,067**   | **478,134** |
-| Even       | 262   | **238,158**   | **476,316** |
+**Exact frame size** (normative when the Signal State Preset has `tbc_applied = TRUE` at the standard 4×fsc sample rate; when either condition does not hold, this value is not normative):
 
-Derivations:
-- **PAL-M odd:** 263 × 909 = **239,067 samples**
-- **PAL-M even:** 262 × 909 = **238,158 samples**
+| Frames/sample count | Samples | Bytes |
+| ------------------- | ------- | ----- |
+| PAL-M frame         | **477,225** | **954,450** |
+
+Derivation:
+- **PAL-M frame:** 525 × 909 = **477,225 samples**
 
 Bytes = samples × 2 (each sample is one 16-bit little-endian word).
 
-**Colour field sequence:**
+**Colour frame sequence:**
 
-Despite using 525-line/60 Hz timing, PAL-M uses a **8-field** colour sequence (not 4-field) due to the PAL colour subcarrier modulation. Phase verification follows the PAL SC/H approach applied to the 525-line/60 Hz timing structure.
+Despite using 525-line/60 Hz timing, PAL-M uses a **4-frame** colour sequence rather than NTSC's 2-frame sequence, due to the PAL colour subcarrier modulation. Phase verification follows the PAL SC/H approach applied to the 525-line/60 Hz timing structure.
 
 ---
 
 ## Frame Ordering and Phase Verification
 
-Video Standard Presets are frame-described. Frames are stored sequentially in file order, and each frame is composed of two interlaced fields (odd/even) per the selected preset. Position within the colour field sequence is not encoded in-band; consumers determine sequence position by measuring burst phase and checking that successive frames preserve the expected preset-specific odd/even pairing and phase progression.
+Video Standard Presets are frame-described. Frames are stored sequentially in file order. Position within the colour frame sequence is not encoded in-band; consumers determine sequence position by measuring burst phase and checking that successive frames preserve the expected preset-specific progression.
 
-- **PAL:** verify against the 8-field progression described in the PAL preset section above.
-- **NTSC:** verify against the 4-field progression described in the NTSC preset section above.
-- **PAL_M:** verify against the 8-field progression described in the PAL_M preset section above.
+- **PAL:** verify against the 4-frame progression described in the PAL preset section above.
+- **NTSC:** verify against the 2-frame progression described in the NTSC preset section above.
+- **PAL_M:** verify against the 4-frame progression described in the PAL_M preset section above.
 
-`ld-decode` and `vhs-decode` field-ordering conventions are documented in the informational notes in each preset section.
+`ld-decode` and `vhs-decode` frame-sequence conventions are documented in the informational notes in each preset section.
 
 **Frame boundary and length integrity (normative):**
 
-When a Signal State Preset requires locked timing at the standard 4x fsc sample rate (for example `tbc_applied = TRUE` and burst/colour lock sufficient to preserve sequence continuity), producers shall preserve frame boundaries and exact frame sample counts throughout the stream. For affected presets, each frame shall contain exactly one odd field and one even field in the correct preset-specific progression, with no skipped fields, duplicated fields, or re-pairing that would shift frame boundary alignment.
+When a Signal State Preset requires locked timing at the standard 4x fsc sample rate (for example `tbc_applied = TRUE` and burst/colour lock sufficient to preserve sequence continuity), producers shall preserve frame boundaries and exact frame sample counts throughout the stream. For affected presets, each stored frame shall preserve the correct preset-specific frame progression, with no skipped frames, duplicated frames, or boundary shifts that would alter sequence alignment.
 
 For these presets, the exact frame sample counts are:
-- **PAL:** 709,379 samples/frame (355,257 odd + 354,122 even)
-- **NTSC:** 477,750 samples/frame (239,330 odd + 238,420 even)
-- **PAL_M:** 477,225 samples/frame (239,067 odd + 238,158 even)
+- **PAL:** 709,379 samples/frame
+- **NTSC:** 477,750 samples/frame
+- **PAL_M:** 477,225 samples/frame
 
-If a producer cannot guarantee this lock (for example because source skips, repeated source fields, dropouts in timing recovery, or other instability prevent reliable frame-to-frame sequence continuity), that producer shall not claim the corresponding locked preset constraints as normative for that content.
+If a producer cannot guarantee this lock (for example because source skips, repeated source frames, dropouts in timing recovery, or other instability prevent reliable frame-to-frame sequence continuity), that producer shall not claim the corresponding locked preset constraints as normative for that content.
 
 ---
 

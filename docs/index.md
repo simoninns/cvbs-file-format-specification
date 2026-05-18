@@ -77,7 +77,7 @@ The `preset` field in the `cvbs_file` metadata table (see the [`cvbs_file` table
 
 ### Preset Definitions
 
-Full definitions — including naming convention, sampling rates, sample level tables, horizontal and vertical structure, and normative field sizes — are in [video-standard-presets](video-standard-presets.md).
+Full definitions — including naming convention, sampling rates, sample level tables, horizontal and vertical structure, and normative sample-count constraints — are in [video-standard-presets](video-standard-presets.md).
 
 ### Non-Standard Value Signaling
 
@@ -241,7 +241,7 @@ Full definitions: [sample-encoding-presets](sample-encoding-presets.md)
 
 ## Signal State Presets
 
-A **Signal State Preset** defines the processing state of the signal at the time of storage along three independent axes: sample rate (standard 4×fsc vs. non-standard), TBC applied (yes vs. no), and burst locked (yes vs. no). The combination governs whether normative field sizes apply, whether signal level compliance is required, and whether phase continuity can be assumed. The preset name is stored in the `signal_state_preset` field of the `cvbs_file` metadata table (see the [`cvbs_file` table](#cvbs_file-table)).
+A **Signal State Preset** defines the processing state of the signal at the time of storage along three independent axes: sample rate (standard 4×fsc vs. non-standard), TBC applied (yes vs. no), and burst locked (yes vs. no). The combination governs whether normative sample-count constraints apply, whether signal level compliance is required, and whether phase continuity can be assumed. The preset name is stored in the `signal_state_preset` field of the `cvbs_file` metadata table (see the [`cvbs_file` table](#cvbs_file-table)).
 
 Full definitions: [signal-state-presets](signal-state-presets.md)
 
