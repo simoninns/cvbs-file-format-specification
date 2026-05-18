@@ -42,24 +42,21 @@ Examples:
 | 1135 (nominal; see note) | 948                    | 187                      |
 
 
-**PAL — non-integer samples per line:** The precise PAL sample rate yields exactly 1135 + 4/625 samples per line on average. The normative consequence is that **exactly 2 lines per field carry 1136 samples** and all remaining lines carry 1135. This is exact, not an approximation. Per frame: 4 lines carry 1136 samples and the remaining 621 carry 1135 (total 709,379 samples per frame).
+**PAL — non-integer samples per line:** The precise PAL sample rate yields exactly 1135 + 4/625 samples per line on average. Per EBU tech3280, this is represented as **623 digital lines of 1135 samples and 2 digital lines of 1137 samples per frame** (total 709,379 samples per frame). The two long digital lines are frame line **313** and frame line **625** (EBU 1-indexed frame numbering), which correspond to field line **312** of the odd field and field line **311** of the even field in this specification's 0-indexed field-relative numbering.
 
-The positions of the 1136-sample lines are **fixed and identical in every frame**. Because 625 × (4/625) = 4 exactly, the fractional phase resets to zero at the end of every frame with no remainder, so the pattern does not drift and does not vary with the 8-field PAL colour sequence.
+For PAL, the **digital active line** is always samples **0-947**. On ordinary lines, the **digital horizontal blanking interval** is samples **948-1134**, so a complete digital line is samples **948-1134, 0-947**. On frame lines 313 and 625, two additional blanking samples are inserted immediately before the first active sample; those long lines are therefore samples **948-1136, 0-947**. In EBU tech3280 numbering, the added samples are **1135** and **1136**.
 
-This file format defines the fractional sample phase to be **zero at the start of field line 0 of the odd field** (the first line of the odd field). The 1136-sample lines are then those where placing one extra sample is required to keep the cumulative sample count an integer, i.e. the condition `⌊4(n+1)/625⌋ > ⌊4n/625⌋` holds, where *n* is the **0-based frame line index** (0 = field line 0 of the odd field; 624 = field line 311 of the even field, the last line of the even field). This yields the following normative line positions:
+The analogue horizontal timing reference is **0H**, defined as the midpoint of the leading edge of sync. On line 1 of field 1 at 0 degrees Sc/H, 0H lies midway between samples **957** and **958**. Any mapping between analogue time and stored digital samples must track the **analogue line period from 0H to 0H**, not from the first numbered digital blanking sample, and this remains true whether the underlying digital line carries 1135 or 1137 samples.
 
-| Field            | Lines carrying 1136 samples (0-indexed within field)    |
-| ---------------- | ------------------------------------------------------- |
-| Odd (313 lines)  | **156** and **312** (312 is the last line of the field) |
-| Even (312 lines) | **155** and **311** (311 is the last line of the field) |
+> *(Informational — EBU tech3280 §1.2 and Fig. 5b):* For PAL the digital active line consists of samples 0-947. A complete ordinary digital line consists of samples 948-1134 and 0-947 inclusive. Frame lines 313 and 625 are the two long lines; they additionally contain samples 1135 and 1136 immediately before sample 0. The half-amplitude point of the leading sync edge on line 1, field 1 falls midway between samples 957 and 958; on succeeding lines the sampling structure advances by 0.361 ns per line (4 samples per frame). *(Line numbers in this block use EBU tech3280's 1-indexed convention; EBU "line 1, field 1" corresponds to field line 0 of the first field in this specification.)*
 
-> *(Informational — EBU tech3280 §1.2):* For PAL the digital active line consists of samples 0–947; the digital horizontal blanking interval is samples 948–1134 (and sample 1135 on lines that carry 1136 samples). The half-amplitude point of the leading sync edge on line 1, field 1 falls mid-way between samples; on succeeding lines the sampling structure advances by 0.361 ns per line (4 samples per frame). *(Line numbers in this block use EBU tech3280's 1-indexed convention; EBU "line 1, field 1" corresponds to field line 0 of the first field in this specification.)*
-
-**Vertical structure:**
+**Vertical structure (digital frame representation):**
 
 | Lines/frame | Fields/frame | Lines/odd field | Lines/even field | Colour field sequence |
 | ----------- | ------------ | --------------- | ---------------- | --------------------- |
 | 625         | 2            | 313             | 312              | 8-field               |
+
+In analogue timing, each PAL field spans **312.5H**. The asymmetry in the table above reflects the **digital line allocation within a 625-line frame representation**, not different analogue field durations: the odd field occupies frame lines 1-313 and the even field occupies frame lines 314-625 in EBU's 1-indexed frame numbering.
 
 > *(Informational — EBU tech3280 §1.1.1):* PAL uses 2:1 interlace over 625 lines at 25 frames/s. The PAL subcarrier-to-horizontal (Sc/H) phase relationship cycles over 8 fields before repeating; fields are labelled 1–8. Odd fields (1, 3, 5, 7) contain 313 lines (lines 1–313 within each frame); even fields (2, 4, 6, 8) contain 312 lines (lines 314–625). *(Line numbers in this block are EBU 1-indexed frame line numbers, counting sequentially across the full 625-line frame.)*
 
@@ -77,8 +74,8 @@ This file format defines the fractional sample phase to be **zero at the start o
 | Even (2, 4, 6, 8) | 312   | **354,122**   | **708,244** |
 
 Derivations:
-- **PAL odd:** 311 × 1135 + 2 × 1136 = 352,985 + 2,272 = **355,257 samples**
-- **PAL even:** 310 × 1135 + 2 × 1136 = 351,850 + 2,272 = **354,122 samples**
+- **PAL odd:** 312 × 1135 + 1 × 1137 = 354,120 + 1,137 = **355,257 samples**
+- **PAL even:** 311 × 1135 + 1 × 1137 = 352,985 + 1,137 = **354,122 samples**
 
 Bytes = samples × 2 (each sample is one 16-bit little-endian word).
 
