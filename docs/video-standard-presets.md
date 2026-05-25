@@ -11,11 +11,21 @@ Examples:
 - `NTSC` — the primary NTSC standard
 - `PAL_M` — a PAL-family variant using NTSC 525-line/60 Hz timing with PAL colour subcarrier modulation
 
+**External standard references used by these presets:**
+
+- [ITU-R BT.1700-1 (2005)](https://github.com/simoninns/analogue-video-specifications/blob/main/docs/video_formats/BT-1700-E/BT-1700-E.md), *Characteristics of composite video signals for conventional analogue television systems* — defines conventional analogue composite PAL signal formats, including 625-line PAL and 525-line PAL used by PAL-M, and includes the approved SMPTE 170M-2004 NTSC text in Annex 2.
+- [SMPTE 170M-2004](https://github.com/simoninns/analogue-video-specifications/blob/main/docs/video_formats/SMPTE-170M-2004/SMPTE-170M-2004.md), *Composite Analog Video Signal - NTSC for Studio Applications* — defines the analogue 525-line, 59.94-field NTSC studio composite signal.
+- [SMPTE 244M-2003](https://github.com/simoninns/analogue-video-specifications/blob/main/docs/video_formats/SMPTE-244M-2003/SMPTE-244M-2003.md), *Bit-Parallel Digital Interface for NTSC Composite Video Signals* — defines the 4fsc digital representation, sample phase, line structure, and 10-bit sample levels for NTSC composite video.
+- [EBU Tech. 3280-E](https://github.com/simoninns/analogue-video-specifications/blob/main/docs/video_formats/EBU-Tech-3280-E/EBU-Tech-3280-E.md), *Specification of interfaces for 625-line digital PAL signals* — defines the 625-line digital PAL composite interface, including 4fsc sample levels, sample phase, line structure, and PAL colour-frame relationship.
+
 ---
 
 ## Preset: `PAL`
 
-**External standards:** EBU tech3280 (EBU 3280).
+**External standards:**
+
+- [ITU-R BT.1700-1 (2005)](https://github.com/simoninns/analogue-video-specifications/blob/main/docs/video_formats/BT-1700-E/BT-1700-E.md), Annex 1 Part B: analogue 625-line PAL signal format used for PAL-I-style baseband CVBS characteristics.
+- [EBU Tech. 3280-E](https://github.com/simoninns/analogue-video-specifications/blob/main/docs/video_formats/EBU-Tech-3280-E/EBU-Tech-3280-E.md): digital 625-line PAL composite interface used for the 4fsc sampling structure, sample levels, line timing, and colour-frame relationship.
 
 **Sampling rate:**
 
@@ -23,7 +33,7 @@ Examples:
 |---------|-----------|
 | 4 × 625 × 25 × (1135/4 + 1/625) | **17,734,475 Hz** (exact) |
 
-**Sample level table (EBU 3280) — applicable when Sample Encoding Preset is `CVBS_U10_4FSC` or `CVBS_U16_4FSC`:**
+**Sample level table (EBU Tech. 3280-E) — applicable when Sample Encoding Preset is `CVBS_U10_4FSC` or `CVBS_U16_4FSC`:**
 
 | Level            | 10-bit Decimal | 10-bit Hex   | Notes                       |
 | ---------------- | -------------- | ------------ | --------------------------- |
@@ -61,7 +71,8 @@ PAL is a **625-line, 25 frames/s** system. The Sc/H relationship repeats every *
 
 **Digital vertical blanking interval:**
 
-> *(Informational — EBU tech3280 §1.3.2):* For PAL, the digital vertical blanking interval extends (line numbers use EBU tech3280's 1-indexed frame line convention, counting sequentially across the full 625-line frame):
+> *(Informational — EBU Tech. 3280-E §1.3.2):* For PAL, the digital vertical blanking interval extends (line numbers use EBU Tech. 3280-E's 1-indexed frame line convention, counting sequentially across the full 625-line frame):
+>
 > - frame line 623 sample 382 to frame line 5 sample 947 (inclusive, wrapping across the frame boundary).
 > - frame line 310 sample 948 to frame line 317 sample 947 (inclusive).
 
@@ -79,7 +90,7 @@ Bytes = samples × 2 (each sample is one 16-bit little-endian word).
 
 The PAL colour sequence cycles over **4 frames** and then repeats.
 
-> *(Informational — EBU tech3280 §1.1.1 and Fig. 1):* At 0° Sc/H (the normative PAL sampling phase), the +U axis of the subcarrier is at zero phase relative to the horizontal timing reference point (0H) at the start of frame 1 in the PAL sequence. The colour burst phase rotates through the standard PAL progression across the 4-frame cycle. Any break in the expected Sc/H phase progression between consecutive stored frames indicates a discontinuity in the PAL sequence.
+> *(Informational — EBU Tech. 3280-E §1.1.1 and Fig. 1):* At 0° Sc/H (the normative PAL sampling phase), the +U axis of the subcarrier is at zero phase relative to the horizontal timing reference point (0H) at the start of frame 1 in the PAL sequence. The colour burst phase rotates through the standard PAL progression across the 4-frame cycle. Any break in the expected Sc/H phase progression between consecutive stored frames indicates a discontinuity in the PAL sequence.
 
 > *(Informational — ld-decode/vhs-decode convention):* PAL TBC output from `ld-decode` conventionally starts at the midpoint of frame 1 in the EBU PAL sequence rather than at its first line. Consumers that care about exact PAL sequence origin should account for that half-frame offset.
 
@@ -87,7 +98,10 @@ The PAL colour sequence cycles over **4 frames** and then repeats.
 
 ## Preset: `NTSC`
 
-**External standards:** SMPTE ST.0244.
+**External standards:**
+
+- [SMPTE 170M-2004](https://github.com/simoninns/analogue-video-specifications/blob/main/docs/video_formats/SMPTE-170M-2004/SMPTE-170M-2004.md): analogue NTSC studio composite signal definition for 525-line, 59.94-field operation.
+- [SMPTE 244M-2003](https://github.com/simoninns/analogue-video-specifications/blob/main/docs/video_formats/SMPTE-244M-2003/SMPTE-244M-2003.md): 4fsc digital representation used for NTSC sample levels, line structure, sample phase, and colour-frame relationship.
 
 **Sampling rate:**
 
@@ -95,7 +109,7 @@ The PAL colour sequence cycles over **4 frames** and then repeats.
 |---------|-----------|
 | 4 × 525 × (30000/1001) × (455/2) | **14,318,181.8… Hz** |
 
-**Sample level table (SMPTE ST.0244) — applicable when Sample Encoding Preset is `CVBS_U10_4FSC` or `CVBS_U16_4FSC`:**
+**Sample level table (SMPTE 244M-2003) — applicable when Sample Encoding Preset is `CVBS_U10_4FSC` or `CVBS_U16_4FSC`:**
 
 | Level            | 10-bit Decimal | 10-bit Hex | Notes                           |
 | ---------------- | -------------- | ---------- | ------------------------------- |
@@ -113,7 +127,7 @@ The PAL colour sequence cycles over **4 frames** and then repeats.
 | ------------------ | ---------------------- | ------------------------ |
 | 910 (exact)        | 768                    | 142                      |
 
-> *(Informational — SMPTE ST.0244 §4.1.1):* For NTSC, sampling is orthogonal; all lines carry exactly 910 samples. The half-amplitude point of the leading (falling) horizontal sync edge falls between samples 784 and 785. The digital active line is samples 0–767; the digital horizontal blanking interval is samples 768–909.
+> *(Informational — SMPTE 244M-2003 §4.1.1):* For NTSC, sampling is orthogonal; all lines carry exactly 910 samples. The half-amplitude point of the leading (falling) horizontal sync edge falls between samples 784 and 785. The digital active line is samples 0–767; the digital horizontal blanking interval is samples 768–909.
 
 **NTSC 2-frame sequence:**
 
@@ -124,11 +138,12 @@ The PAL colour sequence cycles over **4 frames** and then repeats.
 
 NTSC is a **525-line, 30000/1001 frames/s** system. The SC/H relationship repeats every **2 frames**. In this specification, NTSC sequence position is described only by the alternating frame labels **A** and **B**.
 
-> *(Informational — SMPTE ST.0244 §4.1, §4.1.2):* SMPTE ST.0244 describes the same repeating NTSC sequence using a lower-level phase progression. This specification instead normalises that description to a **2-frame** cycle because storage in this format is frame-based. At 0° SC/H, sample 0 of frame line 10 in colour frame A is an I-axis (+123°) sample. *(Line numbers in this block use SMPTE ST.0244's 1-indexed frame line convention, counting sequentially across the full 525-line frame.)*
+> *(Informational — SMPTE 244M-2003 §4.1, §4.1.2):* SMPTE 244M-2003 describes the same repeating NTSC sequence using a lower-level phase progression. This specification instead normalises that description to a **2-frame** cycle because storage in this format is frame-based. At 0° SC/H, sample 0 of frame line 10 in colour frame A is an I-axis (+123°) sample. *(Line numbers in this block use SMPTE 244M-2003's 1-indexed frame line convention, counting sequentially across the full 525-line frame.)*
 
 **Digital vertical blanking interval:**
 
-> *(Informational — SMPTE ST.0244 §5.4.1):* For NTSC, the digital vertical blanking interval extends (line numbers use SMPTE ST.0244's 1-indexed frame line convention, counting sequentially across the full 525-line frame):
+> *(Informational — SMPTE 244M-2003 §5.4.1):* For NTSC, the digital vertical blanking interval extends (line numbers use SMPTE 244M-2003's 1-indexed frame line convention, counting sequentially across the full 525-line frame):
+>
 > - line 525 sample 768 to line 9 sample 767 (inclusive, wrapping across the frame boundary).
 > - line 263 sample 313 to line 272 sample 767 (inclusive).
 
@@ -147,7 +162,7 @@ Bytes = samples × 2 (each sample is one 16-bit little-endian word).
 
 The NTSC colour sequence cycles over **2 frames**, conventionally labelled **A** and **B**, and then repeats.
 
-> *(Informational — SMPTE ST.0244 §3.2, §4.1.2):* At 0° SC/H (the normative NTSC sampling phase), sample 0 of frame line 10 in colour frame A is an I-axis (+123°) sample. Comparing the measured burst phase at that reference point against the expected value for colour frame **A** or **B** identifies position within the 2-frame sequence. A phase discontinuity between consecutive stored frames indicates a colour frame sequence break.
+> *(Informational — SMPTE 244M-2003 §3.2, §4.1.2):* At 0° SC/H (the normative NTSC sampling phase), sample 0 of frame line 10 in colour frame A is an I-axis (+123°) sample. Comparing the measured burst phase at that reference point against the expected value for colour frame **A** or **B** identifies position within the 2-frame sequence. A phase discontinuity between consecutive stored frames indicates a colour frame sequence break.
 
 > *(Informational — ld-decode/vhs-decode convention):* NTSC TBC output from `ld-decode` conventionally starts with colour frame **A**.
 
@@ -155,9 +170,12 @@ The NTSC colour sequence cycles over **2 frames**, conventionally labelled **A**
 
 ## Preset: `PAL_M`
 
-**External standards:** SMPTE ST.0244 (signal levels and timing structure); PAL colour subcarrier modulation (IEC/ABNT standards for Brazil).
+**External standards:**
 
-PAL-M uses 525-line/60 Hz timing (identical frame size and line structure to NTSC) with PAL colour subcarrier modulation. Signal levels follow ST.0244. The colour sequence repeats every **4 frames**, longer than NTSC's 2-frame colour sequence, due to the PAL colour encoding.
+- [ITU-R BT.1700-1 (2005)](https://github.com/simoninns/analogue-video-specifications/blob/main/docs/video_formats/BT-1700-E/BT-1700-E.md), Annex 1 Part B: analogue 525-line PAL signal format used for PAL-M timing, subcarrier frequency relationship, PAL colour modulation, and signal levels.
+- [SMPTE 244M-2003](https://github.com/simoninns/analogue-video-specifications/blob/main/docs/video_formats/SMPTE-244M-2003/SMPTE-244M-2003.md): 525-line 4fsc digital composite coding reference used by this storage preset for the 10-bit sample-value mapping.
+
+PAL-M uses 525-line/60 Hz timing with PAL colour subcarrier modulation, as described by the 525 PAL signal format in ITU-R BT.1700. The subcarrier relationship is `fsc = 909/4 fH`, so native 4fsc sampling gives 909 samples per line. The colour sequence repeats every **4 frames**, longer than NTSC's 2-frame colour sequence, due to the PAL colour encoding.
 
 **Sampling rate:**
 
@@ -165,7 +183,7 @@ PAL-M uses 525-line/60 Hz timing (identical frame size and line structure to NTS
 |---------|-----------|
 | 4 × 525 × (30000/1001) × (909/4) | **14,302,448.1… Hz** |
 
-**Sample level table (SMPTE ST.0244 levels) — applicable when Sample Encoding Preset is `CVBS_U10_4FSC` or `CVBS_U16_4FSC`:**
+**Sample level table (SMPTE 244M-compatible 10-bit coding levels) — applicable when Sample Encoding Preset is `CVBS_U10_4FSC` or `CVBS_U16_4FSC`:**
 
 | Level            | 10-bit Decimal | 10-bit Hex | Notes                           |
 | ---------------- | -------------- | ---------- | ------------------------------- |
