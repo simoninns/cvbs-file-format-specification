@@ -110,3 +110,37 @@ For dual-file YC output (`.y` and `.c`) under `CVBS_TPG21_4FSC`, interpretation 
 Any translation or offset behavior applied to luma in this preset's 10-bit interpretation domain must be applied identically to chroma before converting to stored int16 words.
 
 **Signal level compliance:** Signal level compliance (Section 3.1) applies to this preset. The protected exclusion ranges at the bottom (values 0–3) and top (values 1020–1023) of the 10-bit domain remain reserved. Values 1020–1023 cannot be represented: they would exceed the int16 maximum of 32767 with this encoding. A compliant encoder must clamp to [4, 1019] before encoding.
+
+---
+
+## Preset: `CVBS_S16_FSC`
+
+**Applicable sources:** CVBS equipment producing signed 16-bit output with blanking centred at zero and a ×32 scale factor.
+
+**Word format:** Each sample is stored as a **signed 16-bit little-endian integer**. The 10-bit sample value (0–1023) is encoded using the Video Standard Preset blanking level as the offset and a scale factor of 32:
+
+$$
+\text{int16} = (\text{value}_{10\text{-bit}} - \text{blanking}_{10\text{-bit}}) \times 32
+$$
+
+The five least-significant bits of every stored word are always zero; this is a structural consequence of the ×32 scaling, not bit-field padding. To recover the original 10-bit sample value:
+
+$$
+\text{value}_{10\text{-bit}} = \frac{\text{int16}}{32} + \text{blanking}_{10\text{-bit}}
+$$
+
+- **Signed container:** The 16-bit range is −32768–32767. The blanking level offset centres the signal such that blanking maps to 0 in the int16 domain.
+- **Standard-derived offset:** Unlike `CVBS_TPG21_4FSC`, which uses a fixed device constant (508), the offset for this preset is the blanking level defined by the Video Standard Preset and therefore varies by standard (256 for PAL; 240 for NTSC and PAL_M).
+- **Encoded level examples (PAL, blanking = 256):** Sync tip (4) → −8064; Blanking (256) → 0; Black (282) → 832; White (844) → 18816; Peak (1019) → 24416.
+- **Encoded level examples (NTSC/PAL_M, blanking = 240):** Sync tip (16) → −7168; Blanking (240) → 0; Black (252) → 384; White (800) → 17920; Peak (988) → 23936.
+
+**Amplitude mapping:** The sync tip, blanking, black, white, and peak 10-bit sample values are defined by the Video Standard Preset (see Section 4.2 of the main specification). The sample level tables in [video-standard-presets](video-standard-presets.md) are the normative reference values, interpreted in the 10-bit domain before applying the signed encoding described above.
+
+For dual-file YC output (`.y` and `.c`) under `CVBS_S16_FSC`, interpretation is performed in the 10-bit domain before applying the offset/scale encoding:
+
+- **Luma (`.y`):** Uses the same 10-bit level definitions as composite output.
+- **Chroma (`.c`):** Uses a centred 10-bit representation where chroma zero is at 512 in the 10-bit domain, with excursion around that centre. In the stored int16 domain, chroma zero maps to (512 − blanking₁₀ᵦᵢₜ) × 32 (for example, 8192 for PAL, 8704 for NTSC and PAL_M).
+
+Any translation or offset behaviour applied to luma in this preset's 10-bit interpretation domain must be applied identically to chroma before converting to stored int16 words.
+
+**Signal level compliance:** Signal level compliance (Section 3.1) applies to this preset. The protected exclusion ranges at the bottom (values 0–3) and top (values 1020–1023) of the 10-bit domain remain reserved. A compliant encoder must clamp to [4, 1019] before encoding.
