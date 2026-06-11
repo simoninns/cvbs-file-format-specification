@@ -4,3 +4,5 @@ nav:
   - Sample Encoding Presets: sample-encoding-presets.md
   - Signal State Presets: signal-state-presets.md
   - Dropout Extension Format: extensions/dropout-extension-format.md
+  - EFM Extension Format: extensions/efm-extension-format.md
+  - AC3 Extension Format: extensions/ac3-extension-format.md
