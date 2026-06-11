@@ -106,7 +106,7 @@ The metadata file is a **SQLite database** containing the core metadata table de
 ### SQLite Metadata Schema
 
 ```sql
-PRAGMA user_version = 7;
+PRAGMA user_version = 8;
 
 CREATE TABLE cvbs_file (
     cvbs_file_id                INTEGER PRIMARY KEY,
@@ -132,6 +132,7 @@ CREATE TABLE cvbs_file (
         CHECK (number_of_sequential_frames IS NULL OR number_of_sequential_frames >= 1),
     black_level                 INTEGER,
     has_nonstandard_values      BOOLEAN,
+    audio_locked                BOOLEAN,
     capture_notes               TEXT
 );
 ```
@@ -213,6 +214,15 @@ The `cvbs_file` table records file-level metadata. There is one row per CVBS fil
 - **Nullable:** Yes
 - **Description:** Indicates that the producer observed or intentionally generated non-standard sample values relative to the declared Video Standard Preset and Sample Encoding Preset expectations (for example values outside the nominal legal 10-bit domain, including blanking-interval anomalies such as additional bursts). This flag declares presence only; it does not encode the exact signal type or location. Some sample encodings may preserve such values directly while others may clip or quantize them. `NULL` means not applicable or not known.
 
+#### `audio_locked`
+
+- **Type:** BOOLEAN
+- **Nullable:** Yes
+- **Description:** Indicates whether the audio tracks are frame-locked to the video standard or free-running.
+  - `TRUE` — audio is rate-locked: the sample rate is the exact rational rate defined by the declared Video Standard Preset (see [Audio Data — Frame Alignment and Sample Rate](#frame-alignment-and-sample-rate)). Each frame contains a fixed, exact integer number of samples, and the integer `nSamplesPerSec` field in the WAV `fmt ` chunk is an approximation only; consumers must use the preset-defined rate.
+  - `FALSE` — audio is free-running: the sample rate is not synchronised to the video frame rate. The WAV `fmt ` chunk `nSamplesPerSec` field is authoritative for the rate. Per-frame sample counts are not fixed and drift between audio and video may accumulate over long recordings.
+  - `NULL` — no audio tracks are present, or the locking state is not known.
+
 #### `capture_notes`
 
 - **Type:** TEXT
@@ -249,14 +259,14 @@ Full definitions: [signal-state-presets](signal-state-presets.md)
 
 ## Audio Data
 
-Audio tracks are stored as separate **48 kHz Stereo PCM WAV** files (no other formats, sample rates or encoding are permitted). Up to 16 audio tracks are supported, each as a separate file.
+Audio tracks are stored as separate **stereo PCM WAV** files. No other encoding, channel count, or bit depth is permitted. Up to 16 audio tracks are supported, each as a separate file.
 
 Each file must be a standard **RIFF WAV** file with the following properties:
 
 - **Container:** RIFF/WAVE with a standard RIFF header (`RIFF` chunk, `WAVE` format identifier, `fmt ` sub-chunk, `data` sub-chunk)
 - **Format tag:** PCM (`0x0001`)
 - **Channels:** 2 (stereo)
-- **Sample rate:** 48000 Hz
+- **Sample rate:** 44100 Hz when `audio_locked = FALSE`; preset-defined rate when `audio_locked = TRUE` (see below)
 - **Bit depth:** 16-bit signed integer, little-endian
 
 No compression, no extended `fmt ` chunks, and no non-standard RIFF variants are permitted.
@@ -264,6 +274,36 @@ No compression, no extended `fmt ` chunks, and no non-standard RIFF variants are
 **File naming:** `<basename>_audio_<track_number>.wav`
 
 Track number is zero-padded to two digits: `00`, `01`, `02`, …, `15`.
+
+### Frame-Locked Audio (`audio_locked = TRUE`)
+
+When `audio_locked` is `TRUE` the audio sample rate is locked to the video frame rate: the rate is chosen so that each video frame contains an exact integer number of audio samples, eliminating drift over long recordings. The rate and per-frame count are fixed for each Video Standard Preset:
+
+| Preset  | Frame rate       | Audio sample rate                              | Samples per frame |
+|---------|------------------|------------------------------------------------|-------------------|
+| `PAL`   | 25 fps (exact)   | **44100 Hz** (exact)                           | **1764** (exact, constant) |
+| `NTSC`  | 30000⁄1001 fps   | **44,100,000⁄1001 Hz** (≈ 44055.944 Hz)        | **1470** (exact, constant) |
+| `PAL_M` | 30000⁄1001 fps   | **44,100,000⁄1001 Hz** (≈ 44055.944 Hz)        | **1470** (exact, constant) |
+
+**PAL:** 44100 ÷ 25 = **1764** samples/frame exactly. The WAV `fmt ` chunk `nSamplesPerSec` field shall contain **44100**.
+
+**NTSC and PAL_M:** The rate 44,100,000⁄1001 Hz is exactly 44100 Hz pulled down by the NTSC factor 1000⁄1001, and yields **1470** samples/frame exactly:
+
+> (44,100,000⁄1001) ÷ (30,000⁄1001) = 44,100,000 ÷ 30,000 = **1470**
+
+Because the WAV `fmt ` chunk `nSamplesPerSec` field is a 32-bit integer, it shall contain **44056** (the nearest integer to 44055.944…) for NTSC and PAL_M files. The authoritative sample rate is the exact rational value **44,100,000⁄1001 Hz** as defined by the preset; consumers must derive the rate from the declared Video Standard Preset and must not re-derive it from the integer WAV header field.
+
+For a file containing *N* video frames the total audio sample count in the WAV `data` chunk is *N* × (samples per frame for the declared preset).
+
+To locate the audio samples for frame *n* (zero-based), multiply *n* by the fixed per-frame count for the declared preset; that product is the sample offset from the start of the `data` chunk.
+
+### Free-Running Audio (`audio_locked = FALSE`)
+
+When `audio_locked` is `FALSE` the audio sample rate is **44100 Hz** and is not synchronised to the video frame rate. The WAV `fmt ` chunk `nSamplesPerSec` field shall contain **44100**. No other sample rate is permitted for free-running audio. No fixed per-frame sample count is defined, and per-frame audio boundaries cannot be determined from the video frame index alone. Drift between audio and video may accumulate over long recordings and must be handled by the consumer if synchronisation is required.
+
+### Audio–Video Synchronisation
+
+In both modes the first audio sample in the WAV file is synchronous with the first sample of the first stored video frame. No additional time-offset fields are defined; audio and video share the same frame-0 origin. For free-running audio this synchronisation holds only at the start of the file; drift may develop beyond that point.
 
 ---
 
