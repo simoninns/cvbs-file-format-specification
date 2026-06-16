@@ -40,7 +40,7 @@ Examples:
 | Protected min    | 0–3            | 000h–003h    | Must never appear; reserved |
 | Sync tip         | 4              | 004h (01.0h) | Minimum legal sample value  |
 | Blanking         | 256            | 100h (40.0h) | Zero-signal reference       |
-| Black            | 282            | 11Ah         | Nominal picture black       |
+| Black            | 256            | 100h (40.0h) | No pedestal: black = blanking |
 | White (100%)     | 844            | 34Ch (D3.0h) | 100% white                  |
 | Peak (w/ chroma) | 1019           | 3FBh         | Maximum legal sample value  |
 | Protected max    | 1020–1023      | 3FCh–3FFh    | Must never appear; reserved |
@@ -116,9 +116,9 @@ The PAL colour sequence cycles over **4 frames** and then repeats.
 | Protected min    | 0–3            | 000h–003h  | Must never appear; reserved     |
 | Sync tip         | 16             | 010h       | Minimum legal sample value      |
 | Blanking         | 240            | 0F0h       | Zero-signal reference           |
-| Black            | 252            | 0FCh       | Nominal picture black (7.5 IRE) |
+| Black            | 282            | 11Ah       | Nominal picture black (7.5 IRE: 240 + 7.5 × 5.6 = 282) |
 | White (100%)     | 800            | 320h       | 100% white                      |
-| Peak (w/ chroma) | 988            | 3DCh       | Maximum legal sample value      |
+| Peak (w/ chroma) | 1019           | 3FBh       | Maximum legal sample value      |
 | Protected max    | 1020–1023      | 3FCh–3FFh  | Must never appear; reserved     |
 
 **Horizontal line structure:**
@@ -190,9 +190,9 @@ PAL-M uses 525-line/60 Hz timing with PAL colour subcarrier modulation, as descr
 | Protected min    | 0–3            | 000h–003h  | Must never appear; reserved     |
 | Sync tip         | 16             | 010h       | Minimum legal sample value      |
 | Blanking         | 240            | 0F0h       | Zero-signal reference           |
-| Black            | 252            | 0FCh       | Nominal picture black (7.5 IRE) |
+| Black            | 282            | 11Ah       | Nominal picture black (7.5 IRE: 240 + 7.5 × 5.6 = 282) |
 | White (100%)     | 800            | 320h       | 100% white                      |
-| Peak (w/ chroma) | 988            | 3DCh       | Maximum legal sample value      |
+| Peak (w/ chroma) | 1019           | 3FBh       | Maximum legal sample value      |
 | Protected max    | 1020–1023      | 3FCh–3FFh  | Must never appear; reserved     |
 
 **Horizontal line structure:**
