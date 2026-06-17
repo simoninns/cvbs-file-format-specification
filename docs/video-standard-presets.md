@@ -109,17 +109,19 @@ The PAL colour sequence cycles over **4 frames** and then repeats.
 |---------|-----------|
 | 4 × 525 × (30000/1001) × (455/2) | **14,318,181.8… Hz** |
 
-**Sample level table (SMPTE 244M-2003) — applicable when Sample Encoding Preset is `CVBS_U10_4FSC` or `CVBS_U16_4FSC`:**
+**Sample level table (SMPTE 244M-2003 §4.2.1 / SMPTE 170M-2004 Table 1) — applicable when Sample Encoding Preset is `CVBS_U10_4FSC` or `CVBS_U16_4FSC`:**
 
 | Level            | 10-bit Decimal | 10-bit Hex | Notes                           |
 | ---------------- | -------------- | ---------- | ------------------------------- |
 | Protected min    | 0–3            | 000h–003h  | Must never appear; reserved     |
 | Sync tip         | 16             | 010h       | Minimum legal sample value      |
-| Blanking         | 240            | 0F0h       | Zero-signal reference           |
-| Black            | 282            | 11Ah       | Nominal picture black (7.5 IRE: 240 + 7.5 × 5.6 = 282) |
-| White (100%)     | 800            | 320h       | 100% white                      |
-| Peak (w/ chroma) | 1019           | 3FBh       | Maximum legal sample value      |
+| Blanking         | 240            | 0F0h       | Zero-signal reference (0 IRE; SMPTE 244M-2003 §4.2.1) |
+| Black            | 282            | 11Ah       | +7.5 IRE setup pedestal (SMPTE 170M-2004 Table 1; 240 + 7.5 × 5.6 = 282) |
+| White (100%)     | 800            | 320h       | 100% white (SMPTE 244M-2003 §4.2.1) |
+| Peak (w/ chroma) | 1019           | 3FBh       | Maximum legal sample value (SMPTE 244M-2003 §4.2.4) |
 | Protected max    | 1020–1023      | 3FCh–3FFh  | Must never appear; reserved     |
+
+> **Black level and ST.0244 scope:** SMPTE 244M-2003 (standardised as SMPTE ST 244, sometimes cited as "ST.0244") defines blanking (0 IRE = 240) and white (100 IRE = 800) as its normative signal reference levels. It does **not** independently mandate a picture black level. The +7.5 IRE NTSC setup pedestal shown above comes from SMPTE 170M-2004 Table 1 (and is treated as optional by ITU-R BT.470-6 §2.5.3). Producers that apply no setup (NTSC-J style) will have black at 240 (= blanking). This distinction is recorded via the `black_level` override in the metadata when it differs from the preset default.
 
 **Horizontal line structure:**
 
@@ -183,17 +185,19 @@ PAL-M uses 525-line/60 Hz timing with PAL colour subcarrier modulation, as descr
 |---------|-----------|
 | 4 × 525 × (30000/1001) × (909/4) | **14,302,448.1… Hz** |
 
-**Sample level table (SMPTE 244M-compatible 10-bit coding levels) — applicable when Sample Encoding Preset is `CVBS_U10_4FSC` or `CVBS_U16_4FSC`:**
+**Sample level table (SMPTE 244M-compatible 10-bit coding levels / SMPTE 170M-2004 Table 1) — applicable when Sample Encoding Preset is `CVBS_U10_4FSC` or `CVBS_U16_4FSC`:**
 
 | Level            | 10-bit Decimal | 10-bit Hex | Notes                           |
 | ---------------- | -------------- | ---------- | ------------------------------- |
 | Protected min    | 0–3            | 000h–003h  | Must never appear; reserved     |
 | Sync tip         | 16             | 010h       | Minimum legal sample value      |
-| Blanking         | 240            | 0F0h       | Zero-signal reference           |
-| Black            | 282            | 11Ah       | Nominal picture black (7.5 IRE: 240 + 7.5 × 5.6 = 282) |
+| Blanking         | 240            | 0F0h       | Zero-signal reference (0 IRE)   |
+| Black            | 282            | 11Ah       | +7.5 IRE setup pedestal (SMPTE 170M-2004 Table 1; 240 + 7.5 × 5.6 = 282) |
 | White (100%)     | 800            | 320h       | 100% white                      |
 | Peak (w/ chroma) | 1019           | 3FBh       | Maximum legal sample value      |
 | Protected max    | 1020–1023      | 3FCh–3FFh  | Must never appear; reserved     |
+
+> **Black level note:** As with the NTSC preset, the +7.5 IRE setup pedestal comes from SMPTE 170M-2004 Table 1, not from the 4fsc coding standard. PAL-M sources with no setup (black at blanking = 240) should signal this via the `black_level` metadata override.
 
 **Horizontal line structure:**
 

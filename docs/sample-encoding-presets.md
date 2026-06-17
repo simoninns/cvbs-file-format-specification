@@ -10,6 +10,8 @@ This document is part of the [CVBS File Format Specification](index.md). It cont
 
 **Applicable sources:** Standards-compliant output of `ld-decode`, `vhs-decode`, `cvbs-encode`, and similar tools targeting EBU 3280 or SMPTE ST.0244.
 
+> **Note on SMPTE ST.0244 scope:** SMPTE ST.0244 (the 4fsc digital composite standard, formerly SMPTE 244M) defines the sample rate, word format, sync tip, blanking reference (0 IRE), and 100% white level. It does **not** define black level. The black level — for example the +7.5 IRE NTSC setup pedestal — is an analogue composite signal parameter defined by SMPTE 170M-2004 Table 1 (and treated as optional by ITU-R BT.470-6). Black level for this encoding is determined by the declared Video Standard Preset (see [video-standard-presets](video-standard-presets.md)), not by ST.0244 compliance. Metadata-based black level overrides (e.g. the `black_level` field in the CVBS metadata) are producer-defined values and are independent of ST.0244.
+
 **Word format:** Each sample is stored as a **signed 16-bit little-endian integer**. The unsigned 10-bit value (0–1023) maps directly into the signed 16-bit range such that 10-bit value 0 equals signed 16-bit value 0 and 10-bit value 1023 equals signed 16-bit value 1023.
 
 - **Negative headroom:** Signed 16-bit values below 0 (down to −32768) are available for chroma excursions below the sync tip or other sub-zero signal content.
@@ -33,6 +35,8 @@ Any integer-domain translation applied by the producer to `CVBS_U10_4FSC` sample
 ## Preset: `CVBS_U16_4FSC`
 
 **Applicable sources:** Standards-compliant output of `ld-decode`, `vhs-decode`, `cvbs-encode`, and similar tools targeting EBU 3280 or SMPTE ST.0244, represented as zero-padded 16-bit words.
+
+> **Note on SMPTE ST.0244 scope:** See the equivalent note in `CVBS_U10_4FSC` above. The same applies here: ST.0244 does not define black level; black level is determined by the Video Standard Preset from the analogue composite standard.
 
 **Word format:** Each sample is stored as an **unsigned 16-bit little-endian integer**. The underlying 10-bit value is the same domain as `CVBS_U10_4FSC` (0-1023), encoded by shifting left 6 bits (multiplying by 64): `u16 = value_10bit * 64`.
 
@@ -131,8 +135,8 @@ $$
 
 - **Signed container:** The 16-bit range is −32768–32767. The blanking level offset centres the signal such that blanking maps to 0 in the int16 domain.
 - **Standard-derived offset:** Unlike `CVBS_TPG21_4FSC`, which uses a fixed device constant (508), the offset for this preset is the blanking level defined by the Video Standard Preset and therefore varies by standard (256 for PAL; 240 for NTSC and PAL_M).
-- **Encoded level examples (PAL, blanking = 256):** Sync tip (4) → −8064; Blanking (256) → 0; Black (282) → 832; White (844) → 18816; Peak (1019) → 24416.
-- **Encoded level examples (NTSC/PAL_M, blanking = 240):** Sync tip (16) → −7168; Blanking (240) → 0; Black (252) → 384; White (800) → 17920; Peak (988) → 23936.
+- **Encoded level examples (PAL, blanking = 256):** Sync tip (4) → −8064; Blanking (256) → 0; Black (256) → 0 (no setup: PAL black = blanking); White (844) → 18816; Peak (1019) → 24416.
+- **Encoded level examples (NTSC/PAL_M, blanking = 240):** Sync tip (16) → −7168; Blanking (240) → 0; Black (282) → 1344 (+7.5 IRE setup, SMPTE 170M-2004 Table 1); White (800) → 17920; Peak (1019) → 24928.
 
 **Amplitude mapping:** The sync tip, blanking, black, white, and peak 10-bit sample values are defined by the Video Standard Preset (see Section 4.2 of the main specification). The sample level tables in [video-standard-presets](video-standard-presets.md) are the normative reference values, interpreted in the 10-bit domain before applying the signed encoding described above.
 
