@@ -20,6 +20,18 @@ Examples:
 
 ---
 
+## Stored Frame and Line Origin (Normative)
+
+Stored frames are **0H-aligned**. The horizontal timing reference **0H** is the half-amplitude point of the leading (falling) edge of the line sync pulse. For every stored frame:
+
+- **Horizontal origin:** the first stored sample of a frame is the first sampling instant at or after 0H of the frame's first line. For presets with orthogonal sampling (`NTSC`, `PAL_M`), every stored line follows the same rule: sample 0 of each stored line is the first sampling instant at or after that line's 0H, so the horizontal sync pulse and blanking occupy the **start** of the stored line and the active picture region follows.
+- **Vertical origin:** stored frame line 0 corresponds to frame line 1 of the 1-based broadcast frame line convention — the first line of field 1.
+- The exact sub-sample position of 0H relative to sample 0 is a consequence of the preset's sampling phase and SC/H relationship; it is not additionally constrained by this specification.
+
+This storage origin intentionally follows the `ld-decode`/`vhs-decode` TBC line convention and **differs from the digital line structure of the 4fsc interface standards** (SMPTE 244M-2003 and EBU Tech. 3280-E), in which the digital line begins with the digital active line and 0H falls late in the digital line — between samples 784 and 785 for NTSC, and midway between samples 957 and 958 on broadcast frame line 1 of PAL frame 1. Informational blocks in this document that quote sample numbers from those standards use the source standard's digital-line coordinates unless explicitly restated in stored coordinates.
+
+---
+
 ## Preset: `PAL`
 
 **External standards:**
@@ -52,11 +64,13 @@ Examples:
 | 1135.0064 (exact average; see note) | 948 (nominal)         | 187.0064 (nominal)       |
 
 
-**PAL — non-orthogonal 4fsc sampling structure:** At the exact PAL 4fsc sampling rate there are **1135.0064 sample periods per line** and therefore exactly **709,379 samples per frame**. For frame 1 of the PAL sequence at 0 degrees Sc/H, the half-amplitude point of the leading edge of the line sync pulse on frame line 1 falls midway between samples **957** and **958**. On succeeding lines the sampling structure advances by **0.361 ns per line**, i.e. **4 samples per frame**. Consequently the PAL 4fsc sampling lattice is **non-orthogonal** and repeats at **frame rate** rather than at line rate.
+**PAL — non-orthogonal 4fsc sampling structure:** At the exact PAL 4fsc sampling rate there are **1135.0064 sample periods per line** and therefore exactly **709,379 samples per frame**. For frame 1 of the PAL sequence at 0 degrees Sc/H, the half-amplitude point of the leading edge of the line sync pulse on broadcast frame line 1 (stored frame line 0) falls midway between samples **957** and **958** in EBU Tech. 3280-E's digital-line coordinates; in this specification's stored coordinates that sync edge immediately precedes the frame's first stored sample (see [Stored Frame and Line Origin](#stored-frame-and-line-origin-normative)). On succeeding lines the sampling structure advances by **0.361 ns per line**, i.e. **4 samples per frame**. Consequently the PAL 4fsc sampling lattice is **non-orthogonal** and repeats at **frame rate** rather than at line rate.
 
 The analogue PAL composite waveform is sampled at **4fsc**, so sampling instants occur at **45 degrees, 135 degrees, 225 degrees, and 315 degrees** relative to the **+U axis**. No synthetic or "additional" samples are required in this native 4fsc representation; that concept is only needed when converting the sampled frame into an auxiliary orthogonal digital line representation.
 
 The analogue horizontal timing reference is **0H**, defined as the midpoint of the leading edge of sync. Any mapping between analogue time and stored digital samples must track the **analogue line period from 0H to 0H** within this non-orthogonal frame-repeating structure, not an imposed line-orthogonal numbering scheme.
+
+**Stored frame alignment (normative):** Stored PAL frames are 0H-aligned as defined in [Stored Frame and Line Origin](#stored-frame-and-line-origin-normative): the first stored sample of each frame is the first sampling instant at or after 0H of broadcast frame line 1 (stored frame line 0). Because the PAL 4fsc lattice is non-orthogonal, this origin is defined only at the frame level. It differs from EBU Tech. 3280-E's digital line structure, in which the digital line begins with the digital active line and the frame-1 line-1 sync edge falls midway between samples 957 and 958.
 
 **PAL 4-frame sequence:**
 
@@ -71,7 +85,7 @@ PAL is a **625-line, 25 frames/s** system. The Sc/H relationship repeats every *
 
 **Digital vertical blanking interval:**
 
-> *(Informational — EBU Tech. 3280-E §1.3.2):* For PAL, the digital vertical blanking interval extends (line numbers use EBU Tech. 3280-E's 1-indexed frame line convention, counting sequentially across the full 625-line frame):
+> *(Informational — EBU Tech. 3280-E §1.3.2):* For PAL, the digital vertical blanking interval extends (line numbers use EBU Tech. 3280-E's 1-indexed frame line convention, counting sequentially across the full 625-line frame; sample numbers use EBU Tech. 3280-E's digital-line coordinates, in which sample 0 is the start of the digital active line — not this specification's stored coordinates):
 >
 > - frame line 623 sample 382 to frame line 5 sample 947 (inclusive, wrapping across the frame boundary).
 > - frame line 310 sample 948 to frame line 317 sample 947 (inclusive).
@@ -129,7 +143,9 @@ The PAL colour sequence cycles over **4 frames** and then repeats.
 | ------------------ | ---------------------- | ------------------------ |
 | 910 (exact)        | 768                    | 142                      |
 
-> *(Informational — SMPTE 244M-2003 §4.1.1):* For NTSC, sampling is orthogonal; all lines carry exactly 910 samples. The half-amplitude point of the leading (falling) horizontal sync edge falls between samples 784 and 785. The digital active line is samples 0–767; the digital horizontal blanking interval is samples 768–909.
+> *(Informational — SMPTE 244M-2003 §4.1.1):* For NTSC, sampling is orthogonal; all lines carry exactly 910 samples. The half-amplitude point of the leading (falling) horizontal sync edge falls between samples 784 and 785. The digital active line is samples 0–767; the digital horizontal blanking interval is samples 768–909. *(These sample numbers are SMPTE 244M-2003 digital-line coordinates, not this specification's stored coordinates — see below.)*
+
+**Stored line alignment (normative):** Stored NTSC lines are 0H-aligned as defined in [Stored Frame and Line Origin](#stored-frame-and-line-origin-normative): sample 0 of each stored 910-sample line is the first sampling instant at or after that line's 0H, so the horizontal sync pulse and colour burst occupy the start of the stored line. Relative to SMPTE 244M-2003's digital line structure this places 0H between stored samples −1 and 0 rather than between samples 784 and 785; equivalently, SMPTE 244M digital-line sample 0 corresponds to **stored sample 125**, and the digital active line (SMPTE samples 0–767) corresponds to **stored samples 125–892** of the same line.
 
 **NTSC 2-frame sequence:**
 
@@ -140,14 +156,14 @@ The PAL colour sequence cycles over **4 frames** and then repeats.
 
 NTSC is a **525-line, 30000/1001 frames/s** system. The SC/H relationship repeats every **2 frames**. In this specification, NTSC sequence position is described only by the alternating frame labels **A** and **B**.
 
-> *(Informational — SMPTE 244M-2003 §4.1, §4.1.2):* SMPTE 244M-2003 describes the same repeating NTSC sequence using a lower-level phase progression. This specification instead normalises that description to a **2-frame** cycle because storage in this format is frame-based. At 0° SC/H, sample 0 of frame line 10 in colour frame A is an I-axis (+123°) sample. *(Line numbers in this block use SMPTE 244M-2003's 1-indexed frame line convention, counting sequentially across the full 525-line frame.)*
+> *(Informational — SMPTE 244M-2003 §4.1, §4.1.2):* SMPTE 244M-2003 describes the same repeating NTSC sequence using a lower-level phase progression. This specification instead normalises that description to a **2-frame** cycle because storage in this format is frame-based. At 0° SC/H, sample 0 of frame line 10 in colour frame A is an I-axis (+123°) sample. *(Line and sample numbers in this block use SMPTE 244M-2003's conventions: 1-indexed frame lines counted sequentially across the full 525-line frame, and digital-line sample coordinates.)* In this specification's stored, 0H-aligned coordinates that reference sample is **sample 125 of stored frame line 9** (0-based) in colour frame A.
 
 **Digital vertical blanking interval:**
 
-> *(Informational — SMPTE 244M-2003 §5.4.1):* For NTSC, the digital vertical blanking interval extends (line numbers use SMPTE 244M-2003's 1-indexed frame line convention, counting sequentially across the full 525-line frame):
+> *(Informational — SMPTE 244M-2003 §5.4.1):* For NTSC, the digital vertical blanking interval extends (line numbers use SMPTE 244M-2003's 1-indexed frame line convention, counting sequentially across the full 525-line frame; sample numbers use SMPTE 244M-2003's digital-line coordinates, in which sample 0 is the start of the digital active line — not this specification's stored coordinates):
 >
-> - line 525 sample 768 to line 9 sample 767 (inclusive, wrapping across the frame boundary).
-> - line 263 sample 313 to line 272 sample 767 (inclusive).
+> - frame line 525 sample 768 to frame line 9 sample 767 (inclusive, wrapping across the frame boundary).
+> - frame line 263 sample 313 to frame line 272 sample 767 (inclusive).
 
 **Exact frame size** (normative when the Signal State Preset has `tbc_applied = TRUE` at the standard 4×fsc sample rate; when either condition does not hold, this value is not normative):
 
@@ -164,7 +180,7 @@ Bytes = samples × 2 (each sample is one 16-bit little-endian word).
 
 The NTSC colour sequence cycles over **2 frames**, conventionally labelled **A** and **B**, and then repeats.
 
-> *(Informational — SMPTE 244M-2003 §3.2, §4.1.2):* At 0° SC/H (the normative NTSC sampling phase), sample 0 of frame line 10 in colour frame A is an I-axis (+123°) sample. Comparing the measured burst phase at that reference point against the expected value for colour frame **A** or **B** identifies position within the 2-frame sequence. A phase discontinuity between consecutive stored frames indicates a colour frame sequence break.
+> *(Informational — SMPTE 244M-2003 §3.2, §4.1.2):* At 0° SC/H (the normative NTSC sampling phase), sample 0 of frame line 10 in colour frame A is an I-axis (+123°) sample — in this specification's stored, 0H-aligned coordinates, **sample 125 of stored frame line 9** (0-based). Comparing the measured burst phase at that reference point against the expected value for colour frame **A** or **B** identifies position within the 2-frame sequence. A phase discontinuity between consecutive stored frames indicates a colour frame sequence break. *(SMPTE line and sample numbers use SMPTE 244M-2003's 1-indexed frame line convention and digital-line sample coordinates.)*
 
 > *(Informational — ld-decode/vhs-decode convention):* NTSC TBC output from `ld-decode` conventionally starts with colour frame **A**.
 
@@ -204,6 +220,8 @@ PAL-M uses 525-line/60 Hz timing with PAL colour subcarrier modulation, as descr
 | Total samples/line | Digital active samples | Digital blanking samples |
 | ------------------ | ---------------------- | ------------------------ |
 | 909 (exact)        | 768                    | 141                      |
+
+**Stored line alignment (normative):** Stored PAL-M lines are 0H-aligned as defined in [Stored Frame and Line Origin](#stored-frame-and-line-origin-normative): sample 0 of each stored 909-sample line is the first sampling instant at or after that line's 0H, so the horizontal sync pulse and colour burst occupy the start of the stored line.
 
 **PAL-M 4-frame sequence:**
 

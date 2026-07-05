@@ -59,6 +59,8 @@ Video data is stored as a sequence of **frames**, where each frame contains two 
 ...
 ```
 
+The horizontal and vertical origin of each stored frame — 0H-aligned lines, with frame line 0 at the first line of field 1 — is defined normatively in [Stored Frame and Line Origin](video-standard-presets.md#stored-frame-and-line-origin-normative). Note that this differs from the digital line structure of the 4fsc interface standards (SMPTE 244M-2003, EBU Tech. 3280-E), in which the digital line begins with the digital active line.
+
 ### Frame Ordering and Sequencing
 
 Frames are stored sequentially in the file with no embedded markers identifying the colour field sequence position or validating correct sequential ordering. In this specification, ordering has two independent dimensions: (1) ordering of frames relative to other frames, and (2) ordering of the two fields inside each frame. **No guarantee exists that either dimension is correct.** A frame may contain the expected pair of fields but with intra-frame field order reversed. Due to the nature of RF capture and physical media characteristics — including disc jumps, scratches, media pauses, physical defects, and frame dropouts — the producer may have no reliable way to verify that captured frame and field ordering maintain proper sequential continuity.
