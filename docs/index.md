@@ -108,7 +108,7 @@ The metadata file is a **SQLite database** containing the core metadata table de
 ### SQLite Metadata Schema
 
 ```sql
-PRAGMA user_version = 8;
+PRAGMA user_version = 9;
 
 CREATE TABLE cvbs_file (
     cvbs_file_id                INTEGER PRIMARY KEY,
@@ -134,8 +134,14 @@ CREATE TABLE cvbs_file (
         CHECK (number_of_sequential_frames IS NULL OR number_of_sequential_frames >= 1),
     black_level                 INTEGER,
     has_nonstandard_values      BOOLEAN,
-    audio_locked                BOOLEAN,
     capture_notes               TEXT
+);
+
+CREATE TABLE audio_track (
+    track_number                INTEGER PRIMARY KEY
+        CHECK (track_number BETWEEN 0 AND 15),
+    description                 TEXT,
+    audio_locked                BOOLEAN NOT NULL
 );
 ```
 
@@ -216,20 +222,34 @@ The `cvbs_file` table records file-level metadata. There is one row per CVBS fil
 - **Nullable:** Yes
 - **Description:** Indicates that the producer observed or intentionally generated non-standard sample values relative to the declared Video Standard Preset and Sample Encoding Preset expectations (for example values outside the nominal legal 10-bit domain, including blanking-interval anomalies such as additional bursts). This flag declares presence only; it does not encode the exact signal type or location. Some sample encodings may preserve such values directly while others may clip or quantize them. `NULL` means not applicable or not known.
 
-#### `audio_locked`
-
-- **Type:** BOOLEAN
-- **Nullable:** Yes
-- **Description:** Indicates whether the audio tracks are frame-locked to the video standard or free-running.
-  - `TRUE` — audio is rate-locked: the sample rate is the exact rational rate defined by the declared Video Standard Preset (see [Audio Data — Frame Alignment and Sample Rate](#frame-alignment-and-sample-rate)). Each frame contains a fixed, exact integer number of samples, and the integer `nSamplesPerSec` field in the WAV `fmt ` chunk is an approximation only; consumers must use the preset-defined rate.
-  - `FALSE` — audio is free-running: the sample rate is not synchronised to the video frame rate. The WAV `fmt ` chunk `nSamplesPerSec` field is authoritative for the rate. Per-frame sample counts are not fixed and drift between audio and video may accumulate over long recordings.
-  - `NULL` — no audio tracks are present, or the locking state is not known.
-
 #### `capture_notes`
 
 - **Type:** TEXT
 - **Nullable:** Yes
 - **Description:** Free-form human-readable notes about the capture. May include source material description, known non-compliance (e.g., LaserDisc PAL pilot bursts), equipment details, or other contextual information. `NULL` if no notes are recorded.
+
+### `audio_track` Table
+
+The `audio_track` table records per-track audio metadata. There is exactly one row per audio track file present alongside the CVBS data file (see [Audio Data](#audio-data)); files without audio tracks have no rows.
+
+#### `track_number`
+
+- **Type:** INTEGER, PRIMARY KEY
+- **Nullable:** No
+- **Range:** 0–15
+- **Description:** The audio track number. Must match the zero-padded two-digit suffix of the corresponding `<basename>_audio_<track_number>.wav` file. Track numbers need not be contiguous, but every row must correspond to an existing track file and vice versa.
+
+#### `description`
+
+- **Type:** TEXT
+- **Nullable:** Yes
+- **Description:** Human-readable track description (for example `Analogue`, `EFM digital audio`, `Commentary (L)`). `NULL` if no description is recorded; consumers should then derive a display name from the track number.
+
+#### `audio_locked` (per track)
+
+- **Type:** BOOLEAN
+- **Nullable:** No
+- **Description:** The locking mode of this track. `TRUE` means the track is frame-locked at the exact rational rate defined by the declared Video Standard Preset with an exact integer number of samples per frame; `FALSE` means the track is a free-running 44100 Hz stream whose WAV header rate is authoritative. See [Frame-Locked Audio](#frame-locked-audio-audio_locked--true) and [Free-Running Audio](#free-running-audio-audio_locked--false). In both modes the track's first sample is synchronous with the first sample of the first stored video frame (see [Audio–Video Synchronisation](#audiovideo-synchronisation)).
 
 ### Producer Extension Metadata
 
@@ -268,18 +288,20 @@ Each file must be a standard **RIFF WAV** file with the following properties:
 - **Container:** RIFF/WAVE with a standard RIFF header (`RIFF` chunk, `WAVE` format identifier, `fmt ` sub-chunk, `data` sub-chunk)
 - **Format tag:** PCM (`0x0001`)
 - **Channels:** 2 (stereo)
-- **Sample rate:** 44100 Hz when `audio_locked = FALSE`; preset-defined rate when `audio_locked = TRUE` (see below)
+- **Sample rate:** 44100 Hz when the track is free-running (`audio_locked = FALSE`); preset-defined rate when the track is frame-locked (`audio_locked = TRUE`) — see below
 - **Bit depth:** 16-bit signed integer, little-endian
 
 No compression, no extended `fmt ` chunks, and no non-standard RIFF variants are permitted.
 
 **File naming:** `<basename>_audio_<track_number>.wav`
 
-Track number is zero-padded to two digits: `00`, `01`, `02`, …, `15`.
+Track number is zero-padded to two digits: `00`, `01`, `02`, …, `15`. Track numbers need not be contiguous, but each file's suffix must match its `track_number` in the metadata.
+
+Each track is independently either **frame-locked** or **free-running**. The per-track locking mode is declared in the `audio_locked` column of the [`audio_track` table](#audio_track-table). The two modes are defined below; every reference to `audio_locked` in this section means the track's declared locking mode.
 
 ### Frame-Locked Audio (`audio_locked = TRUE`)
 
-When `audio_locked` is `TRUE` the audio sample rate is locked to the video frame rate: the rate is chosen so that each video frame contains an exact integer number of audio samples, eliminating drift over long recordings. The rate and per-frame count are fixed for each Video Standard Preset:
+When a track's `audio_locked` is `TRUE` the audio sample rate is locked to the video frame rate: the rate is chosen so that each video frame contains an exact integer number of audio samples, eliminating drift over long recordings. The rate and per-frame count are fixed for each Video Standard Preset:
 
 | Preset  | Frame rate       | Audio sample rate                              | Samples per frame |
 |---------|------------------|------------------------------------------------|-------------------|
@@ -301,7 +323,7 @@ To locate the audio samples for frame *n* (zero-based), multiply *n* by the fixe
 
 ### Free-Running Audio (`audio_locked = FALSE`)
 
-When `audio_locked` is `FALSE` the audio sample rate is **44100 Hz** and is not synchronised to the video frame rate. The WAV `fmt ` chunk `nSamplesPerSec` field shall contain **44100**. No other sample rate is permitted for free-running audio. No fixed per-frame sample count is defined, and per-frame audio boundaries cannot be determined from the video frame index alone. Drift between audio and video may accumulate over long recordings and must be handled by the consumer if synchronisation is required.
+When a track's `audio_locked` is `FALSE` the audio sample rate is **44100 Hz** and is not synchronised to the video frame rate. The WAV `fmt ` chunk `nSamplesPerSec` field shall contain **44100**. No other sample rate is permitted for free-running audio. No fixed per-frame sample count is defined, and per-frame audio boundaries cannot be determined from the video frame index alone. Drift between audio and video may accumulate over long recordings and must be handled by the consumer if synchronisation is required.
 
 ### Audio–Video Synchronisation
 
