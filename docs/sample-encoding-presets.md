@@ -117,7 +117,7 @@ Any translation or offset behavior applied to luma in this preset's 10-bit inter
 
 ---
 
-## Preset: `CVBS_S16_FSC`
+## Preset: `CVBS_S16_4FSC`
 
 **Applicable sources:** CVBS equipment producing signed 16-bit output with blanking centred at zero and a ×32 scale factor.
 
@@ -140,7 +140,7 @@ $$
 
 **Amplitude mapping:** The sync tip, blanking, black, white, and peak 10-bit sample values are defined by the Video Standard Preset (see Section 4.2 of the main specification). The sample level tables in [video-standard-presets](video-standard-presets.md) are the normative reference values, interpreted in the 10-bit domain before applying the signed encoding described above.
 
-For dual-file YC output (`.y` and `.c`) under `CVBS_S16_FSC`, interpretation is performed in the 10-bit domain before applying the offset/scale encoding:
+For dual-file YC output (`.y` and `.c`) under `CVBS_S16_4FSC`, interpretation is performed in the 10-bit domain before applying the offset/scale encoding:
 
 - **Luma (`.y`):** Uses the same 10-bit level definitions as composite output.
 - **Chroma (`.c`):** Uses a centred 10-bit representation where chroma zero is at 512 in the 10-bit domain, with excursion around that centre. In the stored int16 domain, chroma zero maps to (512 − blanking₁₀ᵦᵢₜ) × 32 (for example, 8192 for PAL, 8704 for NTSC and PAL_M).

@@ -47,7 +47,7 @@ This specification supports two CVBS (Colour, Video, Blank, and Sync) storage re
 
 The specific sample range — sync tip, blanking, black, white, and peak levels together with any reserved protected values — is defined by the declared [Sample Encoding Preset](#sample-encoding-presets).
 
-For YC (`signal_type='yc'`) files using a Sample Encoding Preset with predefined 10-bit level mapping (for example `CVBS_U10_4FSC`, `CVBS_U16_4FSC`, `CVBS_TPG21_4FSC`, and `CVBS_S16_FSC`), luma (`.y`) follows the same level definitions as composite output, while chroma (`.c`) is represented in a centred 10-bit domain with chroma zero at sample value 512. Any preset-defined integer-domain translation applied to luma must also be applied identically to chroma in that preset's domain.
+For YC (`signal_type='yc'`) files using a Sample Encoding Preset with predefined 10-bit level mapping (for example `CVBS_U10_4FSC`, `CVBS_U16_4FSC`, `CVBS_TPG21_4FSC`, and `CVBS_S16_4FSC`), luma (`.y`) follows the same level definitions as composite output, while chroma (`.c`) is represented in a centred 10-bit domain with chroma zero at sample value 512. Any preset-defined integer-domain translation applied to luma must also be applied identically to chroma in that preset's domain.
 
 ### File Layout
 
@@ -115,7 +115,7 @@ CREATE TABLE cvbs_file (
     preset                      TEXT    NOT NULL
         CHECK (preset IN ('NTSC', 'PAL', 'PAL_M')),
     sample_encoding_preset      TEXT    NOT NULL
-        CHECK (sample_encoding_preset IN ('CVBS_U10_4FSC', 'CVBS_U16_4FSC', 'RAW_S16_28M', 'RAW_S16_40M', 'CVBS_TPG21_4FSC', 'CVBS_S16_FSC')),
+        CHECK (sample_encoding_preset IN ('CVBS_U10_4FSC', 'CVBS_U16_4FSC', 'RAW_S16_28M', 'RAW_S16_40M', 'CVBS_TPG21_4FSC', 'CVBS_S16_4FSC')),
     signal_state_preset         TEXT    NOT NULL
         CHECK (signal_state_preset IN (
             'STANDARD_TBC_LOCKED',
